@@ -97,10 +97,58 @@ public class Input {
 
     // fields...
 
-	public String name;
+    public String _name;
+
+    public Map<String, Integer> _mapSlotToIndex = new HashMap<>(); // init size 0, get index j for a slot
+    public Map<String, Integer> _mapCourseToIndex = new HashMap<>(); // init size 0, get index i for a course
+
+    // this array is symmetric across diagonal
+    // later on init the size to be square at NxN where N = size of _mapCourseToIndex (number of keys = number of courses to schedule)
+    public boolean[][] _notCompatibles; // default init is false, set _notCompatibles[i][j] = true and _notCompatibles[j][i] = true, if we get line COURSE1, COURSE2 (in not-compatible table) and index(Course1) = i and index(course2) = j
+
+    // later on init the size to be [M][N] where M = size of _mapCourseToIndex (number of courses) and N = size of _mapSlotToIndex (number of available slots)
+    public boolean[][] _unwanteds; // [i][j] = true if course i can't be assigned to slot j (rows are courses, cols are slots)
+
+    // WATCH OUT! (the line is read L->R with Slot -> course which makes you want to put i for slot and j for course, but to keep consisten with other data structures, we use i for course and j for slot)
+    // not sure if this should be int or double
+    // set size to be MxN like _unwanteds
+    public double[][] _preferences; // [i][j] = x if preference value of course i with slot j is x, 0.0 by default
+
+    // init size as NxN (N = number of courses)
+    public boolean[][] _pairs; // [i][j] = true if course i is paired with course j, false by default, maybe init diagonal to be true (reflexive property of relation)
+
+    // NOTE: could put partial assignment here in a 2D array, but that seems overkill since each course can only have 1 partial assignment, so we could store this as a field of a Course instead. print no possible solution if a course is assigned 2 partial assignments
+
+
+
 
 
     // figure out best data structures to store parsed data in here...
+
+    // IDEAS:
+
+    /*
+    IDEA 1:
+
+    A HashMap<String, Integer> with (e.g. key = "CPSC 433 LEC 01") and value = i (where this was the ith (from 0) class found in input file reading top to bottom)
+
+    */
+
+    // we are given a new course/lab identifier on a line, we have that unique string (after some magic like trimming), convert it 
+
+    // Have an 
+
+    // represent $ as NULL
+
+    // Have an ArrayList<Course>, which is ordered from 0 to m-1 - contains all the courses we need to schedule (provided input)
+    // Have an ArrayList<ArrayList<Lab>> which is has the outer list ordered from 0 to m-1, and an inner list element ordered from 0 to k-1 - thus list[i] is the list of labs/tuts connected to course c_i. If k=0 then have {} empty list
+    // Have an ArrayList<Slot> which is ordered from 0 to n-1
+    // Have an ArrayList<Slot> which contains all possible slots (thus this is the superset of the previous line)
+
+
+    // INSIDE ALGORITHM:
+    // have a vector of size p (number of input slots)
+    // ith element corresponds to current slot assignment to 
 
 /*
     "Name:"
@@ -116,7 +164,7 @@ public class Input {
 */
 
     // 10 keynames to find...
-    private boolean nameKeyFound, courseSlotsKeyFound, labSlotsKeyFound, coursesKeyFound, labsKeyFound, notCompatibleKeyFound, unwantedKeyFound, preferencesKeyFound, pairKeyFound, partialAssignmentsKeyFound;
+    private boolean _nameKeyFound, _courseSlotsKeyFound, _labSlotsKeyFound, _coursesKeyFound, _labsKeyFound, _notCompatibleKeyFound, _unwantedKeyFound, _preferencesKeyFound, _pairKeyFound, _partialAssignmentsKeyFound;
 
 	//private boolean specialErrorOccurred = false; 
 
@@ -177,8 +225,8 @@ public class Input {
 
             switch(str) {
                 case "Name:":
-                    if (!nameKeyFound) { // if this is the first time finding this key...
-                        nameKeyFound = true; // flag that we found it
+                    if (!_nameKeyFound) { // if this is the first time finding this key...
+                        _nameKeyFound = true; // flag that we found it
                         nameKeyIndex = i;
                     } 
                     else { // if this key was already found, we have a duplicate and thats an error...
@@ -187,8 +235,8 @@ public class Input {
                     }
                     break;
                 case "Course slots:":
-                    if (!courseSlotsKeyFound) {
-                        courseSlotsKeyFound = true;
+                    if (!_courseSlotsKeyFound) {
+                        _courseSlotsKeyFound = true;
                         courseSlotsKeyIndex = i;
                     }
                     else {
@@ -197,8 +245,8 @@ public class Input {
                     }
                     break;
                 case "Lab slots:":
-                    if (!labSlotsKeyFound) {
-                        labSlotsKeyFound = true;
+                    if (!_labSlotsKeyFound) {
+                        _labSlotsKeyFound = true;
                         labSlotsKeyIndex = i;
                     }
                     else {
@@ -207,8 +255,8 @@ public class Input {
                     }
                     break;
                 case "Courses:":
-                    if (!coursesKeyFound) {
-                        coursesKeyFound = true;
+                    if (!_coursesKeyFound) {
+                        _coursesKeyFound = true;
                         coursesKeyIndex = i;
                     }
                     else {
@@ -217,8 +265,8 @@ public class Input {
                     }
                     break;
                 case "Labs:":
-                    if (!labsKeyFound) {
-                        labsKeyFound = true;
+                    if (!_labsKeyFound) {
+                        _labsKeyFound = true;
                         labsKeyIndex = i;
                     }
                     else {
@@ -227,8 +275,8 @@ public class Input {
                     }
                     break;
                 case "Not compatible:":
-                    if (!notCompatibleKeyFound) {
-                        notCompatibleKeyFound = true;
+                    if (!_notCompatibleKeyFound) {
+                        _notCompatibleKeyFound = true;
                         notCompatibleKeyIndex = i;
                     }
                     else {
@@ -237,8 +285,8 @@ public class Input {
                     }
                     break;
                 case "Unwanted:":
-                    if (!unwantedKeyFound) {
-                        unwantedKeyFound = true;
+                    if (!_unwantedKeyFound) {
+                        _unwantedKeyFound = true;
                         unwantedKeyIndex = i;
                     }
                     else {
@@ -247,8 +295,8 @@ public class Input {
                     }
                     break;
                 case "Preferences:":
-                    if (!preferencesKeyFound) {
-                        preferencesKeyFound = true;
+                    if (!_preferencesKeyFound) {
+                        _preferencesKeyFound = true;
                         preferencesKeyIndex = i;
                     }
                     else {
@@ -257,8 +305,8 @@ public class Input {
                     }
                     break;
                 case "Pair:":
-                    if (!pairKeyFound) {
-                        pairKeyFound = true;
+                    if (!_pairKeyFound) {
+                        _pairKeyFound = true;
                         pairKeyIndex = i;
                     }
                     else {
@@ -267,8 +315,8 @@ public class Input {
                     }
                     break;
                 case "Partial assignments:":
-                    if (!partialAssignmentsKeyFound) {
-                        partialAssignmentsKeyFound = true;
+                    if (!_partialAssignmentsKeyFound) {
+                        _partialAssignmentsKeyFound = true;
                         partialAssignmentsKeyIndex = i;
                     }
                     else {
@@ -282,7 +330,7 @@ public class Input {
 
         // now we know we dont have a duplicate keyword.
         // make sure we don't have a missing keywrord...
-        if (!nameKeyFound || !courseSlotsKeyFound || !labSlotsKeyFound || !coursesKeyFound || !labsKeyFound || !notCompatibleKeyFound || !unwantedKeyFound || !preferencesKeyFound || !pairKeyFound || !partialAssignmentsKeyFound) {
+        if (!_nameKeyFound || !_courseSlotsKeyFound || !_labSlotsKeyFound || !_coursesKeyFound || !_labsKeyFound || !_notCompatibleKeyFound || !_unwantedKeyFound || !_preferencesKeyFound || !_pairKeyFound || !_partialAssignmentsKeyFound) {
             System.out.println("Error: Input file is missing a keyword.");
             return false; // stop parsing
         }

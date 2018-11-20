@@ -1,4 +1,4 @@
-
+// ~~~~~~~~~ Maybe move half of this class to AndTree.java and the constraint checking to Slot.java 
 
 
 public class Algorithm {

@@ -1,7 +1,6 @@
 
 
 
-
 public class Main {
 
     public static void main(String[] args) {
@@ -12,12 +11,11 @@ public class Main {
             String outputFile = args[1];
 
 
-            Input input = new Input();
             
             boolean errorOccurred = false;
 
             try {
-                errorOccurred = !input.parseFile(inputFile);
+                errorOccurred = !Input.getInstance().parseFile(inputFile); 
             } catch (Exception e) {
                 System.out.println("Error: Main.java | parsing file threw exception");
                 errorOccurred = true;

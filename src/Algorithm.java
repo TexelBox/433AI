@@ -1,6 +1,11 @@
 // ~~~~~~~~~ Maybe move half of this class to AndTree.java and the constraint checking to Slot.java 
 
 
+
+// ~~~~~~~~~~~IGNORE THIS CLASS~~~~~~~~~~~~~~~~~~
+
+
+
 public class Algorithm {
 
     // fields...

@@ -100,6 +100,25 @@ import java.util.Map;
 
 public class Input {
 
+    // singleton design pattern:
+
+    private static Input instance = null;
+
+    private Input() {
+        // init...
+    }
+
+    public static Input getInstance() {
+        if (instance == null) {
+            instance = new Input();
+        }
+        return instance;
+    }
+
+    //
+
+
+
     // fields...
 
     public String _name;
@@ -108,6 +127,7 @@ public class Input {
     public Map<String, Integer> _mapSlotToIndex = new HashMap<>(); // init size 0, get index j for a slot
     public Map<String, Integer> _mapCourseToIndex = new HashMap<>(); // init size 0, get index i for a course
 
+    public List<Slot> _slotList = new ArrayList<>(); // add a slot TO END everytime input file specifies a new slot that wasnt mentioned before, NOTE: AND-Tree class will use this to expand leaves
     public List<Course> _courseList = new ArrayList<>(); // add a course TO END everytime input file specifies a new course that wasnt mentioned before
 
     // this array is symmetric across diagonal
@@ -177,9 +197,10 @@ public class Input {
 
     // methods...
 
-    public Input() {
-        // init...
-    }
+
+    //public Input() {
+      //  // init...
+    //}
 
 
     // return T or F (was parsing error-free?)
@@ -431,8 +452,6 @@ public class Input {
     }	
     
 
-    // TODO
-
 
     // return True if no error occurred...
     private boolean setNameData(List<String> table) {
@@ -451,10 +470,12 @@ public class Input {
         return true;
     }
 
+
+
     // return True if no error occurred...
     private boolean setCourseSlotsData(List<String> table) {
 
-        // NOTE: LATER ON WE NEED TO CHECK THAT NUMBER OF SLOTS (courseslots + labslots) > 0 and NUMBER OF COURSES (lectures + labs) > 0, can just have boolean flags to set true if we enter the for loops
+        // NOTE: LATER ON WE NEED TO CHECK THAT NUMBER OF SLOTS (courseslots + labslots) > 0 and NUMBER OF COURSES (lectures + labs) > 0, can just have boolean flags to set true if we enter the for loops (or later check if list is size 0) ~~~~~~~~~~~~~~~~~~ 
 
         for (int i = 0; i < table.size(); i++) { // loop line by line
             String[] segments = table.get(i).split(","); // 1. split line by commas
@@ -467,7 +488,7 @@ public class Input {
             // 3. see if each segment is valid input and if so keep track of it, make sure to trim each segment of leading and trailing whitespace and allow case-insensitivity?
 
             // NOTE: here we are just checking if the segments are in an understandable form, then later on we will check if our created Slot is a valid slot
-            // ex. here we just check if a time is in valid HH:MM format ranging from 00:00 to 23:59, NOTE: im writing this to allow 03:00, 3:00, but NOT 3:0
+            // ex. here we just check if a time is in valid HH:MM format ranging from 00:00 to 23:59, NOTE: im writing this to allow 03:00, 3:00, but NOT 3:0, thus HH:MM = H:MM
 
             // first segment = Day
             Slot.Day day;
@@ -498,6 +519,7 @@ public class Input {
             // ~~~~~~~~~~ what is Integer.parseInt("1 1"); i would think an exception, but ill try it out when testing, also parseInt of a float?
             // make sure parseInt works for 00 and 0X, i'm pretty sure this works, note: in slot we will store the time as 0,1,2,...,10,11 (not 00, 01, but we can format this for output printing later)
 
+            // must have HH:MM or H:MM
             if ((subsegs_of_seg1[0].length() != 1 && subsegs_of_seg1[0].length() != 2) || subsegs_of_seg1[1].length() != 2) {
                 System.out.println("Error: invalid course slot");
                 return false;
@@ -540,27 +562,169 @@ public class Input {
             }
             
             // get here if all 4 fields are set properly
-            // NEXT, we pass these fields into the CourseSlot constructor, create this object, use the static function (or whatever) to check that it is a VALID slot (one of the ones specified in assignment description)
-            // if it is valid, we then use these 4 fields to construct a unique key haskKey, set the _haskKey to this and then...
-            // _mapSlotToIndex.put(hashKey, _mapSlotToIndex.size()), thus the new index is the size of map. ex. it contains 3 slots already (0,1,2), now we want to put this 4th slot at index 3
-            // then we also add this slot to a vector of slots if needed (but I dont think this is necessary)
 
+
+
+            String hashKey = day.name() + Integer.toString(startHour) + Integer.toString(startMinute); // ~~~~~~~~test that this is consistent
+            int hashIndex = _mapSlotToIndex.size(); // thus the new index is the size of map. ex. it contains 3 slots already (0,1,2), now we want to put this 4th slot at index 3
+            Slot newSlot = new Slot(hashKey, hashIndex, day, startHour, startMinute);
+            newSlot._coursemax = coursemax;
+            newSlot._coursemin = coursemin;
+            if (!newSlot.checkSlotValidity()) {
+                System.out.println("Error: invalid course slot");
+                return false;
+            }
+            
+            if (_mapSlotToIndex.containsKey(hashKey)) { // due to the order of the input file, the only way this slot was already found, is that it was under course slots header (_courseSlot = true, so no need to check)
+                System.out.println("Error: duplicate course slot"); // ~~~~~~~~~~~~~~~~~~~~~~~~~Figure out what to do with duplicates~~~~~~~~~~~~~~~~~~~~~~~~~~
+                return false;
+            }
+
+            // get here if this is the first time this slot has been found in file
+            newSlot._isCourseSlot = true; // flag that we found this slot under Course slots header
+            _mapSlotToIndex.put(hashKey, hashIndex); // record that we have found this slot in file (just in case it shows up again)
+            _slotList.add(newSlot); // add this slot to end of list
             
         }
 
-        // first split by commas
-        // 
-
         return true;
     }
 
+
+
+    // pretty close to setCourseSlotsData()
     // return True if no error occurred...
     private boolean setLabSlotsData(List<String> table) {
 
-        // similar to above function
+        for (int i = 0; i < table.size(); i++) { // loop line by line
+            String[] segments = table.get(i).split(","); // 1. split line by commas
+            // 2. make sure we have expected number of segments
+            if (segments.length != 4) {
+                System.out.println("Error: invalid lab slot");
+                return false;
+            }
+            // get here if we have proper number of segments...
+            // 3. see if each segment is valid input and if so keep track of it, make sure to trim each segment of leading and trailing whitespace and allow case-insensitivity?
+
+            // NOTE: here we are just checking if the segments are in an understandable form, then later on we will check if our created Slot is a valid slot
+            // ex. here we just check if a time is in valid HH:MM format ranging from 00:00 to 23:59, NOTE: im writing this to allow 03:00, 3:00, but NOT 3:0, thus HH:MM = H:MM
+
+            // first segment = Day
+            Slot.Day day;
+            String seg0 = segments[0].trim().toUpperCase();
+            switch (seg0) {
+                case "MO":
+                    day = Slot.Day.MO;
+                    break;
+                case "TU":
+                    day = Slot.Day.TU;
+                    break;
+                case "FR":
+                    day = Slot.Day.FR;
+                    break;
+                default:
+                    System.out.println("Error: invalid lab slot"); // just using a general msg here
+                    return false;
+            }
+            // get here if day was initialized properly
+
+            // second segment = Start time
+            int startHour;
+            int startMinute;
+            String seg1 = segments[1].trim(); // no need for uppercase since not working with letters here
+            String[] subsegs_of_seg1 = seg1.split(":");
+            if (subsegs_of_seg1.length != 2) {
+                System.out.println("Error: invalid lab slot");
+                return false;
+            } 
+
+            // ~~~~~~~~~~ what is Integer.parseInt("1 1"); i would think an exception, but ill try it out when testing, also parseInt of a float?
+            // make sure parseInt works for 00 and 0X, i'm pretty sure this works, note: in slot we will store the time as 0,1,2,...,10,11 (not 00, 01, but we can format this for output printing later)
+
+            // must have HH:MM or H:MM
+            if ((subsegs_of_seg1[0].length() != 1 && subsegs_of_seg1[0].length() != 2) || subsegs_of_seg1[1].length() != 2) {
+                System.out.println("Error: invalid lab slot");
+                return false;
+            }
+
+            try {
+                startHour = Integer.parseInt(subsegs_of_seg1[0]);
+                startMinute = Integer.parseInt(subsegs_of_seg1[1]);
+            }
+            catch (NumberFormatException e) {
+                System.out.println("Error: invalid lab slot");
+                return false;
+            }
+
+            // now make sure in range 00:00 to 23:59
+            if (startHour < 0 || startHour > 23 || startMinute < 0 || startMinute > 59) {
+                System.out.println("Error: invalid lab slot");
+                return false;
+            }
+            // get here if times are valid times (but still need to check slot validity later)
+
+            // third segment = labmax, 4th segment = labmin
+            int labmax;
+            int labmin;
+            String seg2 = segments[2].trim(); // no need for uppercase
+            String seg3 = segments[3].trim(); // no need for uppercase
+
+            try {
+                labmax = Integer.parseInt(seg2);
+                labmin = Integer.parseInt(seg3);
+            }
+            catch (NumberFormatException e) {
+                System.out.println("Error: invalid lab slot");
+                return false;
+            }
+
+            if (labmax < 0 || labmin < 0 || (labmax < labmin)) { // ~~~~maybe if labmax < labmin, we output no valid solution instead?
+                System.out.println("Error: invalid lab slot");
+                return false;
+            }
+            
+            // get here if all 4 fields are set properly
+
+
+
+            String hashKey = day.name() + Integer.toString(startHour) + Integer.toString(startMinute); // ~~~~~~~~test that this is consistent
+            int hashIndex = _mapSlotToIndex.size(); // thus the new index is the size of map. ex. it contains 3 slots already (0,1,2), now we want to put this 4th slot at index 3
+            Slot newSlot = new Slot(hashKey, hashIndex, day, startHour, startMinute);
+            newSlot._labmax = labmax;
+            newSlot._labmin = labmin;
+            if (!newSlot.checkSlotValidity()) {
+                System.out.println("Error: invalid lab slot");
+                return false;
+            }
+            
+            if (_mapSlotToIndex.containsKey(hashKey)) { // if this slot was already found in file...
+
+                int theIndex = _mapSlotToIndex.get(hashKey);
+
+                if (_slotList.get(theIndex)._isLabSlot) { // if we found this slot already under lab slot header... (bad duplicate) 
+                    System.out.println("Error: duplicate lab slot"); // ~~~~~~~~~~~~~~~~~~~~~~~~~Figure out what to do with duplicates~~~~~~~~~~~~~~~~~~~~~~~~~~
+                    return false;
+                }
+                else { // we found this slot before (but it was under course slot header only)
+                    // need to just overwrite these 3 fields (everything else is same)
+                    _slotList.get(theIndex)._labmax = labmax;
+                    _slotList.get(theIndex)._labmin = labmin;
+                    _slotList.get(theIndex)._isLabSlot = true;
+                }
+
+            }
+            else { // if this is the first time finding this slot in file (didn't find it before under course slots header)
+                newSlot._isLabSlot = true; // flag that we found this slot under Lab slots header
+                _mapSlotToIndex.put(hashKey, hashIndex); // record that we have found this slot in file (just in case it shows up again)
+                _slotList.add(newSlot); // add this slot to end of list
+            }
+            
+        }
 
         return true;
     }
+
+
 
     // return True if no error occurred...
     private boolean setCoursesData(List<String> table) {
@@ -608,46 +772,59 @@ public class Input {
 
             // next check for LEC (case insensitive?)
 
-            String type;
+            Course.CourseType type;
             String seg2 = segments[2];
             if (!seg2.toUpperCase().equals("LEC")) {
                 System.out.println("Error: invalid course");
                 return false;
             }
-            type = "LEC";
+            type = Course.CourseType.LEC;
 
             // next check for section
 
-            int section;
+            int primarySection;
             String seg3 = segments[3];
             try {
-                section = Integer.parseInt(seg3);
+                primarySection = Integer.parseInt(seg3);
             }
             catch (NumberFormatException e) {
                 System.out.println("Error: invalid course");
                 return false;
             }
 
-            if (section < 0) {
+            if (primarySection < 0) {
                 System.out.println("Error: invalid course");
                 return false;
             }
 
             // now we know we have a valid course (since we dont have to check that this course actually exists at the university)
-            // create the course with these 4 fields and store in an arrayList if we want...
 
-            // just creating hashkey here for now, can move into Course class later...
+            String hashKey = department + Integer.toString(number) + type.name() + Integer.toString(primarySection);
+            int hashIndex = _mapCourseToIndex.size();
+            Course newCourse = new Course(hashKey, hashIndex, department, number, type, primarySection);
 
-            // NOTE: later the hashkey could be exactly what we print out at the end
-
-            String hashKey = department + Integer.toString(number) + type + Integer.toString(section);
-            int index = _mapCourseToIndex.size();
-            _mapCourseToIndex.put(hashKey, index); 
+            // if this course line was already found (duplicate, but no error (just dont add this course again))
+            if (!_mapCourseToIndex.containsKey(hashKey)) { // thus, if this is the first time finding this course...
+                _mapCourseToIndex.put(hashKey, hashIndex); // record that we have found this course in file (just in case it shows up again)
+                _courseList.add(newCourse); // add this course to end of list
+            }
 
         }
 
         return true;
     }
+
+
+
+
+
+
+    // TODO...
+
+
+
+
+
 
     // return True if no error occurred...
     private boolean setLabsData(List<String> table) {
@@ -686,6 +863,15 @@ public class Input {
     }
 
 
+
+
+
+
+
+
+
+
+    // helper methods...
 
     // returns T if all characters are letters
     // test this so it doesn't consider the terminating character (like \0)

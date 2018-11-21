@@ -28,6 +28,9 @@ public class Slot {
     public int _lectureCount = 0; // number of lectures in _courseIndices 
     public int _labCount = 0; // number of labs/tuts in _courseIndices
 
+    public boolean _isCourseSlot = false; // set true if this slot was found under CourseSlot header
+    public boolean _isLabSlot = false; // set true if this slot was found under LabSlot header 
+
     // have function to test if this is a valid slot which the constructor can call (or when we change data?)
 
     // have function to test if 2 slots are overlapping (their interval (depends on day) overlaps), could be static so it can be called from the algorithm easier, or have it check for an overlap with this slot
@@ -47,12 +50,22 @@ public class Slot {
 
 
 
+    // after construction, check that this slot, (which has the proper format for the 4 fields), is one of the VALID slots per the assignment description.
+    public boolean checkSlotValidity() { // ~~~~~~~~~~~~~~~~~~~~~~~~~~~TODO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        return true;
+    }
 
 
-/* PROBLEM: Slot would need reference to Input data structures (maybe make Input a singleton class)
-    // return True if no hard constraint are violated
-    // this slot has just been changed (added into currentAssign)
-    // NOTE: here we assume that for an entry in _currentAssign, we only ever assign CourseSlot to an index corresponding to a Lecture and LabSlot only to an index for a Lab
+
+
+
+
+
+
+
+    // return True if no hard constraints are violated
+    // this is the slot that has just been changed
     public boolean checkHardConstraints() {
         // get the course indices currently assigned to this slot
         // using these indices we then check over the data structures in Input class
@@ -68,11 +81,11 @@ public class Slot {
         // check each pair of indices...
         for (int i = 0; i < _courseIndices.size() - 1; i++) {
             for (int j = i + 1; j < _courseIndices.size(); j++) {
-                if (_input._notCompatibles[i][j]) {
+                if (Input.getInstance()._notCompatibles[i][j]) {
                     return false; // VIOLATION
                 }
 
-                if (_input._courseList.get(i)._is500Course && _input._courseList.get(j)._is500Course) { // 2 500-lvl LECS assigned to same slot
+                if (Input.getInstance()._courseList.get(i)._is500Course && Input.getInstance()._courseList.get(j)._is500Course) { // 2 500-lvl LECS assigned to same slot
                     return false; // VIOLATION
                 }
 
@@ -84,11 +97,11 @@ public class Slot {
 
         // check each index...
         for (int i = 0; i < _courseIndices.size(); i++) {
-            if (_input._unwanteds[i][_hashIndex]) {
+            if (Input.getInstance()._unwanteds[i][_hashIndex]) {
                 return false; // VIOLATION
             }
 
-            if (_input._courseList.get(i)._isEveningCourse && !_isEveningSlot) { // an evening course not assigned to an evening slot
+            if (Input.getInstance()._courseList.get(i)._isEveningCourse && !_isEveningSlot) { // an evening course not assigned to an evening slot
                 return false; // VIOLATION
             }
 
@@ -102,6 +115,11 @@ public class Slot {
 
         return true;
     }
-*/        
+
+
+
+    
+
+
 
 }

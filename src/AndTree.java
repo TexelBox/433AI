@@ -6,8 +6,6 @@ public class AndTree {
 
     // fields...
 
-    public Input _input;
-
     public Node _root; // starting point
     public List<Node> _leaves = new ArrayList<Node>();
 
@@ -16,8 +14,7 @@ public class AndTree {
 
     // methods...
 
-    public AndTree(Input input) {
-        _input = input;
+    public AndTree() {
         // ~~~~init root before adding!!!, ether here or at declaration
         _leaves.add(_root);
         // also init size of arrays here based on number of courses/slots found in input

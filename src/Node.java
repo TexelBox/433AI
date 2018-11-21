@@ -41,7 +41,8 @@ public class Node {
 
         // else:
         // then case 3.
-        
+
+        return true;
     }
 
     // ~~~~~~~~~NOTE: when a node is closed, we could set it to null in order to free up memory (done with it), make sure to remove it from the leaves list

@@ -98,6 +98,8 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
+
+
 public class Input {
 
     // singleton design pattern:
@@ -816,21 +818,230 @@ public class Input {
 
 
 
+    // return True if no error occurred...
+    private boolean setLabsData(List<String> table) {
+
+        // NOTE: i'm just gonna assume that the department indicator (e.g CPSC) can be anything as long as its at least 1 character and all characters are letters (case-insensitive), thus cpsc = CPSC
+        // use uppercase for hashKey
+        // also assuming the course number can be any string as long as it can be parsed as a non-negative integer, maybe only allow 3 digits?, thus 000 = 00 = 0, remove any leaded 0s for hashkey, but what about CPSC 599.82
+        // also assume the section can be any string as long as it is it can be parsed as a non-negative int
+
+        for (int i = 0; i < table.size(); i++) { // loop line by line...
+            String[] segments = table.get(i).split("\\s+"); // split line by whitespace
+
+            if (segments.length == 4) {
+
+                // no need to trim a segment since the split by whitespace did that automatically
+                // check if department identifier is alphabetic and if so make it uppercase and move on
+
+                String department;
+                String seg0 = segments[0];
+                if (!isAlphabetic(seg0)) {
+                    System.out.println("Error: invalid lab");
+                    return false;
+                }
+                department = seg0.toUpperCase();
+
+
+
+                // next check the number
+
+                int number;
+                String seg1 = segments[1];
+                try {
+                    number = Integer.parseInt(seg1);
+                }
+                catch (NumberFormatException e) {
+                    System.out.println("Error: invalid lab");
+                    return false;
+                }
+
+                if (number < 0) {
+                    System.out.println("Error: invalid lab");
+                    return false;
+                }
+
+
+                // next check for LAB or TUT (case insensitive?)
+
+                Course.CourseType type;
+                String seg2 = segments[2];
+                if (seg2.toUpperCase().equals("LAB")) {
+                    type = Course.CourseType.LAB;
+                }
+                else if (seg2.toUpperCase().equals("TUT")) {
+                    type = Course.CourseType.TUT;
+                }
+                else {
+                    System.out.println("Error: invalid lab");
+                    return false;
+                }
+
+
+                // next check for primary section
+
+                int primarySection;
+                String seg3 = segments[3];
+                try {
+                    primarySection = Integer.parseInt(seg3);
+                }
+                catch (NumberFormatException e) {
+                    System.out.println("Error: invalid lab");
+                    return false;
+                }
+
+                if (primarySection < 0) {
+                    System.out.println("Error: invalid lab");
+                    return false;
+                }
+
+
+                // now we know we have a valid lab (since we dont have to check that this lab actually exists at the university)
+
+                String hashKey = department + Integer.toString(number) + type.name() + Integer.toString(primarySection);
+                int hashIndex = _mapCourseToIndex.size();
+                Course newCourse = new Course(hashKey, hashIndex, department, number, type, primarySection);
+
+                // if this lab line was already found (duplicate, but no error (just dont add this lab again))
+                if (!_mapCourseToIndex.containsKey(hashKey)) { // thus, if this is the first time finding this lab...
+                    _mapCourseToIndex.put(hashKey, hashIndex); // record that we have found this lab in file (just in case it shows up again)
+                    _courseList.add(newCourse); // add this lab to end of list
+                }
+
+
+
+            }
+
+            else if (segments.length == 6) {
+
+                // no need to trim a segment since the split by whitespace did that automatically
+                // check if department identifier is alphabetic and if so make it uppercase and move on
+
+                String department;
+                String seg0 = segments[0];
+                if (!isAlphabetic(seg0)) {
+                    System.out.println("Error: invalid lab");
+                    return false;
+                }
+                department = seg0.toUpperCase();
+
+
+
+                // next check the number
+
+                int number;
+                String seg1 = segments[1];
+                try {
+                    number = Integer.parseInt(seg1);
+                }
+                catch (NumberFormatException e) {
+                    System.out.println("Error: invalid lab");
+                    return false;
+                }
+
+                if (number < 0) {
+                    System.out.println("Error: invalid lab");
+                    return false;
+                }
+
+
+
+                // next check for LEC + LAB or LEC + TUT (case insensitive?)
+
+                Course.CourseType type;
+                String seg2 = segments[2];
+                String seg4 = segments[4];
+                if (seg2.toUpperCase().equals("LEC") && seg4.toUpperCase().equals("LAB")) {
+                    type = Course.CourseType.LECLAB;
+                }
+                else if (seg2.toUpperCase().equals("LEC") && seg4.toUpperCase().equals("TUT")) {
+                    type = Course.CourseType.LECTUT;
+                }
+                else {
+                    System.out.println("Error: invalid lab");
+                    return false;
+                }
+
+
+
+                // next check for primary section
+
+                int primarySection;
+                String seg3 = segments[3];
+                try {
+                    primarySection = Integer.parseInt(seg3);
+                }
+                catch (NumberFormatException e) {
+                    System.out.println("Error: invalid lab");
+                    return false;
+                }
+
+                if (primarySection < 0) {
+                    System.out.println("Error: invalid lab");
+                    return false;
+                }
+
+
+
+                // next check for secondary section
+
+                int secondarySection;
+                String seg5 = segments[5];
+                try {
+                    secondarySection = Integer.parseInt(seg5);
+                }
+                catch (NumberFormatException e) {
+                    System.out.println("Error: invalid lab");
+                    return false;
+                }
+
+                if (secondarySection < 0) {
+                    System.out.println("Error: invalid lab");
+                    return false;
+                }
+
+                
+                // ~~~~~~~~~~~~~~~~~~~~~~~~~NOTE: Do we need to check for the lecture section part actually existing???? (for now, i'm not doing this)
+                // ~~~~~~~~~~~~~~~~~~~~~~~~~what if we get CPSC 433 LEC 01 TUT 01 and CPSC 433 TUT 01 
+                // ~~~~~~~~~~~~~~~~~~~~~~~~~TO ADD: not-compatible of this lab with same course Lec's, can take first part of string and search hashmap for prefixes.
+
+
+                // now we know we have a valid lab (since we dont have to check that this lab actually exists at the university)
+
+                String hashKey = department + Integer.toString(number) + type.name() + Integer.toString(primarySection) + ":" + Integer.toString(secondarySection); // e.g. CPSC 433 LEC 01 TUT 02 becomes CPSC1LECTUT1:2
+                int hashIndex = _mapCourseToIndex.size();
+                Course newCourse = new Course(hashKey, hashIndex, department, number, type, primarySection, secondarySection);
+
+                // if this lab line was already found (duplicate, but no error (just dont add this lab again))
+                if (!_mapCourseToIndex.containsKey(hashKey)) { // thus, if this is the first time finding this lab...
+                    _mapCourseToIndex.put(hashKey, hashIndex); // record that we have found this lab in file (just in case it shows up again)
+                    _courseList.add(newCourse); // add this lab to end of list
+                }
+                    
+                
+
+            }
+            else {
+                System.out.println("Error: invalid lab");
+                return false;
+            }
+
+
+
+        }
+
+        return true;
+    }
+
+
+
+
+
 
 
 
     // TODO...
 
-
-
-
-
-
-    // return True if no error occurred...
-    private boolean setLabsData(List<String> table) {
-
-        return true;
-    }
 
     // return True if no error occurred...
     private boolean setNotCompatibleData(List<String> table) {

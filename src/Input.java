@@ -413,6 +413,8 @@ public class Input {
             return false;
         }
 
+        // ~~~~~~~~~~~~PUT CHECK HERE that we have at least 1 slot (otherwise output an error - no frames to put in)
+
         if (!setCoursesData(coursesTable)) {
             System.out.println("Error: Invalid courses data");
             return false;
@@ -422,6 +424,36 @@ public class Input {
             System.out.println("Error: Invalid labs data");
             return false;
         }
+
+        // ~~~~~~~~~~~~~~~~PUT CHECK HERE that we have at least 1 course (otherwise output an error - nothing to schedule)
+
+        // IF EVERTHING IS GOOD...
+
+        // init sizes of the arrays...
+
+        int n = _slotList.size(); // N = number of possible slots
+        int s = _courseList.size(); // S = number of courses (Lectures + labs/tuts) to schedule
+
+        _notCompatibles = new boolean[s][s];
+
+
+
+
+        // TEMP- for visual aid...
+        //public boolean[][] _notCompatibles; 
+
+        //public boolean[][] _unwanteds; 
+    
+
+        //public double[][] _preferences; 
+    
+        //public boolean[][] _pairs;
+
+
+
+
+
+
 
         if (!setNotCompatibleData(notCompatibleTable)) {
             System.out.println("Error: Invalid not compatible data");
@@ -453,6 +485,8 @@ public class Input {
         return true; // default return
     }	
     
+
+    // ~~~~~~~~~~~~~~~~NOTE: remove the error msgs from these functions?
 
 
     // return True if no error occurred...
@@ -773,16 +807,9 @@ public class Input {
 
 
 
-
-
-
-
     // ~~~~~~~~~~~~~~~~~~~~~~~~~NOTE: Do we need to check for the lecture section part actually existing???? (for now, i'm not doing this)
     // ~~~~~~~~~~~~~~~~~~~~~~~~~what if we get CPSC 433 LEC 01 TUT 01 and CPSC 433 TUT 01 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~TO ADD: not-compatible of this lab with same course Lec's and other labs, can use new hashmap + sharedKeys
-
-
-
 
     // return True if no error occurred...
     private boolean setLabsData(List<String> table) {
@@ -830,142 +857,52 @@ public class Input {
     // TODO...
 
 
-
+    // NOTE: ",CPSC 433 LEC 01" will break this currently since we pass in an empty left string, so update newCourse to return NULL on empty or null input. Also, might as well trim it to be safe
 
     // return True if no error occurred...
     private boolean setNotCompatibleData(List<String> table) {
 
-        /*
-
-
         for (int i = 0; i < table.size(); i++) { // loop line by line
-            String[] segments = table.get(i).split(","); // 1. split line by commas
-
-            // 2. make sure we have expected number of segments
-
+            String line = table.get(i); // is a non-blank trimmed line
+            String[] segments = line.split(","); // 1. split line by commas
             if (segments.length != 2) {
-                System.out.println("Error: invalid not-compatible line");
                 return false;
             }
 
-            // get here if we have proper number of segments...
+            String seg0 = segments[0].trim();
+            String seg1 = segments[1].trim();
 
-            // 3. see if each segment is valid input and if so keep track of it, make sure to trim each segment of leading and trailing whitespace and allow case-insensitivity?
+            Course leftCourse = getNewCourse(seg0);
+            Course rightCourse = getNewCourse(seg1);
+            if (leftCourse == null || rightCourse == null) { // if either segment wasn't parsed into a course...
+                return false;
+            }
 
-            
+            // NOTE: don't use the new hashIndices, they will be wrong
+            // now we can extract the hashKeys and lookup if they were actually defined before...
+            // RULES: right now, if we find a non-defined course, just ignore this line ~~~~~~~~~~~~~~maybe change to print an error in future?
+            // ALSO, if a duplicate line is given, no special treatment is needed since it will overwrite TRUE with TRUE (no change)
 
+            String leftHashKey = leftCourse._hashKey;
+            String rightHashKey = rightCourse._hashKey;
+
+            if (!_mapCourseToIndex.containsKey(leftHashKey) || !_mapCourseToIndex.containsKey(rightHashKey)) { // if one of these 2 courses is undefined...
+                continue; // ignore this line
+            }
+
+            // get here if both courses are defined...
+            // now update array (symmetric)...
+
+            int leftHashIndex = _mapCourseToIndex.get(leftHashIndex);
+            int rightHashIndex = _mapCourseToIndex.get(rightHashIndex);
+
+            _notCompatibles[leftHashIndex][rightHashIndex] = true; // flag both cells (symmetrically across diagonal)
+            _notCompatibles[rightHashIndex][leftHashIndex] = true;            
 
         }
-
-
-
-
-
-
-
-
-      
-
-
-            // first segment = Day
-            Slot.Day day;
-            String seg0 = segments[0].trim().toUpperCase();
-            switch (seg0) {
-                case "MO":
-                    day = Slot.Day.MO;
-                    break;
-                case "TU":
-                    day = Slot.Day.TU;
-                    break;
-                default:
-                    System.out.println("Error: invalid course slot"); // just using a general msg here
-                    return false;
-            }
-            // get here if day was initialized properly
-
-            // second segment = Start time
-            int startHour;
-            int startMinute;
-            String seg1 = segments[1].trim(); // no need for uppercase since not working with letters here
-            String[] subsegs_of_seg1 = seg1.split(":");
-            if (subsegs_of_seg1.length != 2) {
-                System.out.println("Error: invalid course slot");
-                return false;
-            } 
-
-            // ~~~~~~~~~~ what is Integer.parseInt("1 1"); i would think an exception, but ill try it out when testing, also parseInt of a float?
-            // make sure parseInt works for 00 and 0X, i'm pretty sure this works, note: in slot we will store the time as 0,1,2,...,10,11 (not 00, 01, but we can format this for output printing later)
-
-            // must have HH:MM or H:MM
-            if ((subsegs_of_seg1[0].length() != 1 && subsegs_of_seg1[0].length() != 2) || subsegs_of_seg1[1].length() != 2) {
-                System.out.println("Error: invalid course slot");
-                return false;
-            }
-
-            try {
-                startHour = Integer.parseInt(subsegs_of_seg1[0]);
-                startMinute = Integer.parseInt(subsegs_of_seg1[1]);
-            }
-            catch (NumberFormatException e) {
-                System.out.println("Error: invalid course slot");
-                return false;
-            }
-
-            // now make sure in range 00:00 to 23:59
-            if (startHour < 0 || startHour > 23 || startMinute < 0 || startMinute > 59) {
-                System.out.println("Error: invalid course slot");
-                return false;
-            }
-            // get here if times are valid times (but still need to check slot validity later)
-
-            // third segment = coursemax, 4th segment = coursemin
-            int coursemax;
-            int coursemin;
-            String seg2 = segments[2].trim(); // no need for uppercase
-            String seg3 = segments[3].trim(); // no need for uppercase
-
-            try {
-                coursemax = Integer.parseInt(seg2);
-                coursemin = Integer.parseInt(seg3);
-            }
-            catch (NumberFormatException e) {
-                System.out.println("Error: invalid course slot");
-                return false;
-            }
-
-            if (coursemax < 0 || coursemin < 0 || (coursemax < coursemin)) { // ~~~~maybe if coursemax < coursemin, we output no valid solution instead?
-                System.out.println("Error: invalid course slot");
-                return false;
-            }
-            
-            // get here if all 4 fields are set properly
-
-
-
-            String hashKey = day.name() + Integer.toString(startHour) + Integer.toString(startMinute); // ~~~~~~~~test that this is consistent
-            int hashIndex = _mapSlotToIndex.size(); // thus the new index is the size of map. ex. it contains 3 slots already (0,1,2), now we want to put this 4th slot at index 3
-            Slot newSlot = new Slot(hashKey, hashIndex, day, startHour, startMinute);
-            newSlot._coursemax = coursemax;
-            newSlot._coursemin = coursemin;
-            if (!newSlot.checkSlotValidity()) {
-                System.out.println("Error: invalid course slot");
-                return false;
-            }
-            
-            if (_mapSlotToIndex.containsKey(hashKey)) { // due to the order of the input file, the only way this slot was already found, is that it was under course slots header (_courseSlot = true, so no need to check)
-                System.out.println("Error: duplicate course slot"); // ~~~~~~~~~~~~~~~~~~~~~~~~~Figure out what to do with duplicates~~~~~~~~~~~~~~~~~~~~~~~~~~
-                return false;
-            }
-
-            // get here if this is the first time this slot has been found in file
-            newSlot._isCourseSlot = true; // flag that we found this slot under Course slots header
-            _mapSlotToIndex.put(hashKey, hashIndex); // record that we have found this slot in file (just in case it shows up again)
-            _slotList.add(newSlot); // add this slot to end of list
-            
-        }
-        */
 
         return true;
+
     }
 
 

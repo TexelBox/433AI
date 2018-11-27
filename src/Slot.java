@@ -41,10 +41,10 @@ public class Slot {
         _day = day;
         _startHour = startHour;
         _startMinute = startMinute;
-        SetEveningFlag();
+        setEveningFlag();
     }
 
-    private void SetEveningFlag() {
+    private void setEveningFlag() {
         _isEveningSlot = _startHour >= 18;
     }
 

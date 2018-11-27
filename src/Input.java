@@ -728,98 +728,63 @@ public class Input {
 
 
 
+
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
     // return True if no error occurred...
     private boolean setCoursesData(List<String> table) {
 
-        // NOTE: i'm just gonna assume that the department indicator (e.g CPSC) can be anything as long as its at least 1 character and all characters are letters (case-insensitive), thus cpsc = CPSC
-        // use uppercase for hashKey
-        // also assuming the course number can be any string as long as it can be parsed as a non-negative integer, maybe only allow 3 digits?, thus 000 = 00 = 0, remove any leaded 0s for hashkey, but what about CPSC 599.82
-        // also assume the section can be any string as long as it is it can be parsed as a non-negative int
-
         for (int i = 0; i < table.size(); i++) { // loop line by line...
-            String[] segments = table.get(i).split("\\s+"); // split line by whitespace
-
-            if (segments.length != 4) {
-                System.out.println("Error: invalid course");
+            String line = table.get(i); // it is TRIMMED AND NON-BLANK string
+            Course newCourse = getNewCourse(line);
+            if (newCourse == null) {
                 return false;
             }
 
-            // no need to trim a segment since the split by whitespace did that automatically
-            // check if department identifier is alphabetic and if so make it uppercase and move on
+            // get here if a valid course was constructed from this line...
+            // now check that it is in fact a lecture...
 
-            String department;
-            String seg0 = segments[0];
-            if (!isAlphabetic(seg0)) {
-                System.out.println("Error: invalid course");
-                return false;
-            }
-            department = seg0.toUpperCase();
-
-            // next check the number
-
-            int number;
-            String seg1 = segments[1];
-            try {
-                number = Integer.parseInt(seg1);
-            }
-            catch (NumberFormatException e) {
-                System.out.println("Error: invalid course");
+            if (!newCourse._isLecture) {
                 return false;
             }
 
-            if (number < 0) {
-                System.out.println("Error: invalid course");
-                return false;
-            }
+            // get here if we have a valid lecture
 
-            // next check for LEC (case insensitive?)
+            // ~~~~~~~~~~~~~~~~NOTE: currently duplicates are simply ignored
 
-            Course.CourseType type;
-            String seg2 = segments[2];
-            if (!seg2.toUpperCase().equals("LEC")) {
-                System.out.println("Error: invalid course");
-                return false;
-            }
-            type = Course.CourseType.LEC;
+            String hashKey = newCourse._hashKey;
+            int hashIndex = newCourse._hashIndex;
 
-            // next check for section
-
-            int primarySection;
-            String seg3 = segments[3];
-            try {
-                primarySection = Integer.parseInt(seg3);
-            }
-            catch (NumberFormatException e) {
-                System.out.println("Error: invalid course");
-                return false;
-            }
-
-            if (primarySection < 0) {
-                System.out.println("Error: invalid course");
-                return false;
-            }
-
-            // now we know we have a valid course (since we dont have to check that this course actually exists at the university)
-
-            String hashKey = department + Integer.toString(number) + type.name() + Integer.toString(primarySection);
-            int hashIndex = _mapCourseToIndex.size();
-            Course newCourse = new Course(hashKey, hashIndex, department, number, type, primarySection);
-
-            // if this course line was already found (duplicate, but no error (just dont add this course again))
-            if (!_mapCourseToIndex.containsKey(hashKey)) { // thus, if this is the first time finding this course...
-                _mapCourseToIndex.put(hashKey, hashIndex); // record that we have found this course in file (just in case it shows up again)
-                _courseList.add(newCourse); // add this course to end of list
+            if (!_mapCourseToIndex.containsKey(hashKey)) { // if this is the first time finding this lecture...
+                _mapCourseToIndex.put(hashKey, hashIndex); // record that we have found this lecture in file (just in case it shows up again)
+                _courseList.add(newCourse); // add this lecture to end of list
             }
 
         }
 
         return true;
+
     }
+
+
+
+
+
+
+
+    
 
 
 
     // return True if no error occurred...
     private boolean setLabsData(List<String> table) {
+
+        /*
 
         // NOTE: i'm just gonna assume that the department indicator (e.g CPSC) can be anything as long as its at least 1 character and all characters are letters (case-insensitive), thus cpsc = CPSC
         // use uppercase for hashKey
@@ -1029,6 +994,7 @@ public class Input {
 
 
         }
+        */
 
         return true;
     }
@@ -1043,11 +1009,157 @@ public class Input {
     // TODO...
 
 
+
+
     // return True if no error occurred...
     private boolean setNotCompatibleData(List<String> table) {
 
+        /*
+
+
+        for (int i = 0; i < table.size(); i++) { // loop line by line
+            String[] segments = table.get(i).split(","); // 1. split line by commas
+
+            // 2. make sure we have expected number of segments
+
+            if (segments.length != 2) {
+                System.out.println("Error: invalid not-compatible line");
+                return false;
+            }
+
+            // get here if we have proper number of segments...
+
+            // 3. see if each segment is valid input and if so keep track of it, make sure to trim each segment of leading and trailing whitespace and allow case-insensitivity?
+
+            
+
+
+        }
+
+
+
+
+
+
+
+
+      
+
+
+            // first segment = Day
+            Slot.Day day;
+            String seg0 = segments[0].trim().toUpperCase();
+            switch (seg0) {
+                case "MO":
+                    day = Slot.Day.MO;
+                    break;
+                case "TU":
+                    day = Slot.Day.TU;
+                    break;
+                default:
+                    System.out.println("Error: invalid course slot"); // just using a general msg here
+                    return false;
+            }
+            // get here if day was initialized properly
+
+            // second segment = Start time
+            int startHour;
+            int startMinute;
+            String seg1 = segments[1].trim(); // no need for uppercase since not working with letters here
+            String[] subsegs_of_seg1 = seg1.split(":");
+            if (subsegs_of_seg1.length != 2) {
+                System.out.println("Error: invalid course slot");
+                return false;
+            } 
+
+            // ~~~~~~~~~~ what is Integer.parseInt("1 1"); i would think an exception, but ill try it out when testing, also parseInt of a float?
+            // make sure parseInt works for 00 and 0X, i'm pretty sure this works, note: in slot we will store the time as 0,1,2,...,10,11 (not 00, 01, but we can format this for output printing later)
+
+            // must have HH:MM or H:MM
+            if ((subsegs_of_seg1[0].length() != 1 && subsegs_of_seg1[0].length() != 2) || subsegs_of_seg1[1].length() != 2) {
+                System.out.println("Error: invalid course slot");
+                return false;
+            }
+
+            try {
+                startHour = Integer.parseInt(subsegs_of_seg1[0]);
+                startMinute = Integer.parseInt(subsegs_of_seg1[1]);
+            }
+            catch (NumberFormatException e) {
+                System.out.println("Error: invalid course slot");
+                return false;
+            }
+
+            // now make sure in range 00:00 to 23:59
+            if (startHour < 0 || startHour > 23 || startMinute < 0 || startMinute > 59) {
+                System.out.println("Error: invalid course slot");
+                return false;
+            }
+            // get here if times are valid times (but still need to check slot validity later)
+
+            // third segment = coursemax, 4th segment = coursemin
+            int coursemax;
+            int coursemin;
+            String seg2 = segments[2].trim(); // no need for uppercase
+            String seg3 = segments[3].trim(); // no need for uppercase
+
+            try {
+                coursemax = Integer.parseInt(seg2);
+                coursemin = Integer.parseInt(seg3);
+            }
+            catch (NumberFormatException e) {
+                System.out.println("Error: invalid course slot");
+                return false;
+            }
+
+            if (coursemax < 0 || coursemin < 0 || (coursemax < coursemin)) { // ~~~~maybe if coursemax < coursemin, we output no valid solution instead?
+                System.out.println("Error: invalid course slot");
+                return false;
+            }
+            
+            // get here if all 4 fields are set properly
+
+
+
+            String hashKey = day.name() + Integer.toString(startHour) + Integer.toString(startMinute); // ~~~~~~~~test that this is consistent
+            int hashIndex = _mapSlotToIndex.size(); // thus the new index is the size of map. ex. it contains 3 slots already (0,1,2), now we want to put this 4th slot at index 3
+            Slot newSlot = new Slot(hashKey, hashIndex, day, startHour, startMinute);
+            newSlot._coursemax = coursemax;
+            newSlot._coursemin = coursemin;
+            if (!newSlot.checkSlotValidity()) {
+                System.out.println("Error: invalid course slot");
+                return false;
+            }
+            
+            if (_mapSlotToIndex.containsKey(hashKey)) { // due to the order of the input file, the only way this slot was already found, is that it was under course slots header (_courseSlot = true, so no need to check)
+                System.out.println("Error: duplicate course slot"); // ~~~~~~~~~~~~~~~~~~~~~~~~~Figure out what to do with duplicates~~~~~~~~~~~~~~~~~~~~~~~~~~
+                return false;
+            }
+
+            // get here if this is the first time this slot has been found in file
+            newSlot._isCourseSlot = true; // flag that we found this slot under Course slots header
+            _mapSlotToIndex.put(hashKey, hashIndex); // record that we have found this slot in file (just in case it shows up again)
+            _slotList.add(newSlot); // add this slot to end of list
+            
+        }
+        */
+
         return true;
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // return True if no error occurred...
     private boolean setUnwantedData(List<String> table) {
@@ -1084,8 +1196,8 @@ public class Input {
 
     // helper methods...
 
-    // returns T if all characters are letters
-    // test this so it doesn't consider the terminating character (like \0)
+    // returns T if all characters are letters (a-z,A-Z)
+    // test this so it doesn't consider the terminating character (like \0) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     private boolean isAlphabetic(String str) {
 
         if (str == null) {
@@ -1113,5 +1225,325 @@ public class Input {
 
 
 
+    // returns T if all characters are digits (0-9)
+    // test this so it doesn't consider the terminating character (like \0) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    private boolean isNumeric(String str) {
+
+        if (str == null) {
+            return false;
+        }
+
+        char[] chars = str.toCharArray();
+        int count = 0; // number of digits found so far
+        for (int i = 0; i < str.length(); i++) {
+            if (Character.isDigit(chars[i])) {
+                count++;
+            }
+            else {
+                return false;
+            }
+        }
+
+        if (count > 0) {
+            return true;
+        }
+        else { // special case for empty string passed in
+            return false;
+        }
+    }
+
+
+
+
+
+/*
+
+
+    // Param: line (non-blank and trimmed string)
+    // Return: NULL (if error occurred)
+    // Return: Course instance created from this line
+    private Course getNewCourse(String line) {
+
+        String[] segments = line.split("\\s+"); // split line by whitespace
+
+        if (segments.length == 4 || segments.length == 6) {
+
+            // no need to trim a segment since the split by whitespace did that automatically
+            // check if department identifier is alphabetic and if so make it uppercase and move on
+
+            String department;
+            String seg0 = segments[0];
+            if (!isAlphabetic(seg0)) {
+                return null;
+            }    
+            department = seg0.toUpperCase();
+
+            // next check the number
+
+            int number;
+            String seg1 = segments[1];
+            try {
+                number = Integer.parseInt(seg1);
+            }
+            catch (NumberFormatException e) {
+                return null;
+            }
+
+            if (number < 0) {
+                return null;
+            }
+
+            // next check for LEC, LAB, TUT, LECLAB, or LECTUT (case-insensitive)
+
+            Course.CourseType type;
+            String seg2 = segments[2];
+            if (segments.length == 4) {
+                String typeStr1 = seg2.toUpperCase();
+                switch(typeStr1) {
+                    case "LEC":
+                        type = Course.CourseType.LEC;
+                        break;
+                    case "LAB":
+                        type = Course.CourseType.LAB;
+                        break;
+                    case "TUT":
+                        type = Course.CourseType.TUT;
+                        break;
+                    default:
+                        return null;
+                }
+            }
+            else if (segments.length == 6) {
+                String typeStr1 = seg2.toUpperCase();
+                String seg4 = segments[4];
+                String typeStr2 = seg4.toUpperCase();
+                if (typeStr1.equals("LEC")) {
+                    switch(typeStr2) {
+                        case "LAB":
+                            type = Course.CourseType.LECLAB;
+                            break;
+                        case "TUT":
+                            type = Course.CourseType.LECTUT;
+                            break;
+                        default:
+                            return null;
+                    }
+                }
+                else {
+                    return null;
+                }
+            }
+            
+
+
+
+
+
+
+
+
+
+
+            
+
+
+            // next check for section
+
+            int primarySection;
+            String seg3 = segments[3];
+            try {
+                primarySection = Integer.parseInt(seg3);
+            }
+            catch (NumberFormatException e) {
+                System.out.println("Error: invalid course");
+                return false;
+            }
+
+            if (primarySection < 0) {
+                System.out.println("Error: invalid course");
+                return false;
+            }
+
+            // now we know we have a valid course (since we dont have to check that this course actually exists at the university)
+
+            String hashKey = department + Integer.toString(number) + type.name() + Integer.toString(primarySection);
+            int hashIndex = _mapCourseToIndex.size();
+            Course newCourse = new Course(hashKey, hashIndex, department, number, type, primarySection);
+
+            // if this course line was already found (duplicate, but no error (just dont add this course again))
+            if (!_mapCourseToIndex.containsKey(hashKey)) { // thus, if this is the first time finding this course...
+                _mapCourseToIndex.put(hashKey, hashIndex); // record that we have found this course in file (just in case it shows up again)
+                _courseList.add(newCourse); // add this course to end of list
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        }
+        else {
+            return null;
+        }
+    
+    }
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // Param: line (non-blank and trimmed string)
+    // Return: NULL (if error occurred)
+    // Return: Course instance created from this line
+    private Course getNewCourse(String line) {
+
+        String[] segments = line.split("\\s+"); // split line by whitespace
+
+        if (segments.length == 4 || segments.length == 6) {
+
+            // no need to trim a segment since the split by whitespace did that automatically
+            // 1. DEPARTMENT 
+            // RULES: any alphabetical string will be accepted AS IS - case-sensitive
+
+            String department;
+            String seg0 = segments[0];
+            if (!isAlphabetic(seg0)) { // VIOLATION: non-alphabetic
+                return null;
+            }
+            department = seg0;
+
+
+
+            // 2. NUMBER
+            // RULES: any numerical string will be accepted AS IS
+
+            String number;
+            String seg1 = segments[1];
+            if (!isNumeric(seg1)) { // VIOLATION: non-numeric
+                return null;
+            }
+            number = seg1;
+
+
+
+            // 3. PRIMARYTYPE
+            // RULES: either exactly "LEC", "LAB", "TUT" 
+
+            Course.PrimaryType primaryType;
+            String seg2 = segments[2];
+            switch(seg2) {
+                case "LEC":
+                    primaryType = Course.PrimaryType.LEC;
+                    break;
+                case "LAB":
+                    primaryType = Course.PrimaryType.LAB;
+                    break;
+                case "TUT":
+                    primaryType = Course.PrimaryType.TUT;
+                    break;
+                default:
+                    return null;
+            }
+
+
+
+            // 4. PRIMARYSECTION
+            // RULES: any numerical string will be accepted AS IS
+
+            String primarySection;
+            String seg3 = segments[3];
+            if (!isNumeric(seg3)) { // VIOLATION: non-numeric
+                return null;
+            }
+            primarySection = seg3;
+
+
+
+            if (segments.length == 4) { // 4 segments (DONE)
+                // now we have a valid course...
+                int hashIndex = _mapCourseToIndex.size();
+                Course newCourse = new Course(hashIndex, department, number, primaryType, primarySection);
+                return newCourse;
+            }
+            else { // 6 segments
+                // 5. SECONDARYTYPE
+                // RULES: either exactly "LAB" or "TUT", but primarytype must be "LEC"
+
+                if (primaryType != Course.PrimaryType.LEC) {
+                    return null;
+                }
+
+                Course.SecondaryType secondaryType;
+                String seg4 = segments[4];
+                switch(seg4) {
+                    case "LAB":
+                        secondaryType = Course.SecondaryType.LAB;
+                        break;
+                    case "TUT":
+                        secondaryType = Course.SecondaryType.TUT;
+                        break;
+                    default:
+                        return null;
+                }
+
+
+
+                // 6. SECONDARYSECTION
+                // RULES: any numerical string will be accepted AS IS
+
+                String secondarySection;
+                String seg5 = segments[5];
+                if (!isNumeric(seg5)) { // VIOLATION: non-numeric
+                    return null;
+                }
+                secondarySection = seg5;
+
+
+
+                // now we have a valid course...
+                int hashIndex = _mapCourseToIndex.size();
+                Course newCourse = new Course(hashIndex, department, number, primaryType, primarySection, secondaryType, secondarySection);
+                return newCourse;
+            }
+            
+        }
+        else { // VIOLATION: segment count
+            return null;
+        }
+
+    }
 
 }
+
+
+
+
+
+// NOTE: if a line specifies constraints on a course that supposedly was written on a line before, but wasn't, then just ignore the line

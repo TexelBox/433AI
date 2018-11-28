@@ -143,6 +143,9 @@ public class Input {
     // init size as NxN (N = number of courses)
     public boolean[][] _pairs; // [i][j] = true if course i is paired with course j, false by default, maybe init diagonal to be true (reflexive property of relation)
 
+    // init to size S (S = number of courses)
+    public Slot[] _partialAssignments; // [i] = sl, means that course i must assign to slot sl, NULL means no assignment ($)
+
     // NOTE: could put partial assignment here in a 2D array, but that seems overkill since each course can only have 1 partial assignment, so we could store this as a field of a Course instead. print no possible solution if a course is assigned 2 partial assignments
 
     // figure out best data structures to store parsed data in here...
@@ -371,6 +374,8 @@ public class Input {
 
         // NOTE: must define data structures before doing this
 
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~NOTE: I FORGOT PUT IN EACH FUNCTION A CHECK OVER IF THE TABLE LIST IS EMPTY, RIGHT NOW IT WILL JUST RETURN TRUE
+
         if (!setNameData(nameTable)) {
             System.out.println("Error: Invalid name data");
             return false;
@@ -411,6 +416,7 @@ public class Input {
         _unwanteds = new boolean[s][n];
         _preferences = new int[s][n];
         _pairs = new boolean[s][s]; // symmetric
+        _partialAssignments = new Slot[s];
 
         // MAYBE do any other initializtion?
 
@@ -890,7 +896,7 @@ public class Input {
         return true;        
     }
 
-    
+
 
     // return True if no error occurred...
     private boolean setPairData(List<String> table) {
@@ -954,22 +960,96 @@ public class Input {
 
 
 
-
+    // QUESTION: ~~~~~~~~~~~~~~~~~~~CAN 813/913 be found normally in the file???? - i'm assuming not
 
     // return True if no error occurred...
     private boolean setPartialAssignmentsData(List<String> table) {
 
+        for (int i = 0; i < table.size(); i++) { // loop line by line
+            String line = table.get(i); // is a non-blank trimmed line
+            String[] segments = line.split(","); // 1. split line by commas
+            if (segments.length != 3) {
+                return false;
+            }
+
+            String seg0 = segments[0].trim(); // course ID
+            String seg1 = segments[1].trim(); // day
+            String seg2 = segments[2].trim(); // time
+
+            Course courseInfo = getNewCourse(seg0);
+
+            if (courseInfo == null) { // if this string couldn't be parsed...
+                return false;
+            }
+
+            // get here if course fits format
+
+            Slot slotInfoLEC = getNewSlot(seg1, seg2, true, false); // no verification!
+            Slot slotInfoLAB = getNewSlot(seg1, seg2, false, false); // no verification!
+
+            if (slotInfoLEC == null && slotInfoLAB == null) { // if these 2 strings couldn't be parsed (violated format)
+                return false;
+            }
+
+            // get here if slot fits either courseslot format or labslot format or both
+
+            // now that we have checked for typos, we can check if the course is defined in our file
+
+            String courseHashKey = courseInfo._hashKey;
+
+            if (!_mapCourseToIndex.containsKey(courseHashKey)) { // if line has a valid course, but wasn't defined in our file, we have a fatal error
+                return false;
+            }
+            // get here if it is defined so we can get its hashIndex
+            int courseHashIndex = _mapCourseToIndex.get(courseHashKey);
+
+            // Now we can use the hashmap instead to check validity (since only valid and defined slots got hashed) 
+
+            // use one of the infos that isn't null (since we know theres at least 1, if both are !null, then we can use either since we just need the hashkey which is the same)
+            String slotHashKey;
+            if (slotInfoLEC != null) {
+                slotHashKey = slotInfoLEC._hashKey;
+            }
+            else { // slotInfoLAB != null
+                slotHashKey = slotInfoLAB._hashKey;
+            }
+
+            if (!_mapSlotToIndex.containsKey(slotHashKey)) { // slot fits format, but it isn't VALID or DEFINED
+                return false;
+            }
+            // get here if it is valid and defined, so we can get its hashIndex
+            int slotHashIndex = _mapSlotToIndex.get(slotHashKey);
+
+            // now we have a defined course and a defined slot
+
+            // make sure that there is no mismatch of course with pure labslot and lab with pure courseslot...
+
+            Course theCourse = _courseList.get(courseHashIndex);
+            Slot theSlot = _slotList.get(slotHashIndex);
+
+            if ((theCourse._isLecture && !theSlot._isCourseSlot) || (!theCourse._isLecture && !theSlot._isLabSlot)) { // if we are assigning a course to a pure lab slot OR a lab to a pure course slot
+                System.out.println("ERROR: partial assignment mismatch of course to slot type (course assigned to lab slot or lab assigned to course slot.)");
+                return false;
+            }
+
+            // now must check if this course has already been partassigned in a previous line (error if we have a duplicate)
+
+            if (_partialAssignments[courseHashIndex] != null) { // if this is a duplicate or a different assignment...
+                System.out.println("ERROR: partial assignment of a course has multiple definitions.");
+                return false;
+            }
+
+            // get here if everything is OK...
+
+            // can now assign this slot to course index of list
+
+            _partialAssignments[courseHashIndex] = theSlot;
+
+        }    
+
         return true;
+
     }
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1284,3 +1364,7 @@ public class Input {
     }
 
 }
+
+
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~NOTE: print out specific error messages in order to debug in the future

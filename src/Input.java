@@ -804,7 +804,7 @@ public class Input {
     }
 
 
-    
+
     // return True if no error occurred...
     private boolean setPreferencesData(List<String> table) {
 
@@ -890,6 +890,56 @@ public class Input {
         return true;        
     }
 
+    
+
+    // return True if no error occurred...
+    private boolean setPairData(List<String> table) {
+        
+        for (int i = 0; i < table.size(); i++) { // loop line by line
+            String line = table.get(i); // is a non-blank trimmed line
+            String[] segments = line.split(","); // 1. split line by commas
+            if (segments.length != 2) {
+                return false;
+            }
+
+            String seg0 = segments[0].trim();
+            String seg1 = segments[1].trim();
+
+            Course leftCourse = getNewCourse(seg0);
+            Course rightCourse = getNewCourse(seg1);
+            if (leftCourse == null || rightCourse == null) { // if either segment wasn't parsed into a course...
+                return false;
+            }
+
+            // NOTE: don't use the new hashIndices, they will be wrong
+            // now we can extract the hashKeys and lookup if they were actually defined before...
+            // RULES: right now, if we find a non-defined course, just ignore this line ~~~~~~~~~~~~~~maybe change to print an error in future?
+            // ALSO, if a duplicate line is given, no special treatment is needed since it will overwrite TRUE with TRUE (no change)
+
+            String leftHashKey = leftCourse._hashKey;
+            String rightHashKey = rightCourse._hashKey;
+
+            if (!_mapCourseToIndex.containsKey(leftHashKey) || !_mapCourseToIndex.containsKey(rightHashKey)) { // if one of these 2 courses is undefined...
+                continue; // ignore this line
+            }
+
+            // get here if both courses are defined...
+            // now update array (symmetric)...
+
+            int leftHashIndex = _mapCourseToIndex.get(leftHashKey);
+            int rightHashIndex = _mapCourseToIndex.get(rightHashKey);
+
+            _pairs[leftHashIndex][rightHashIndex] = true; // flag both cells (symmetrically across diagonal)
+            _pairs[rightHashIndex][leftHashIndex] = true;            
+
+        }
+
+        return true;
+    }
+
+
+
+
 
 
 
@@ -904,11 +954,7 @@ public class Input {
 
 
 
-    // return True if no error occurred...
-    private boolean setPairData(List<String> table) {
 
-        return true;
-    }
 
     // return True if no error occurred...
     private boolean setPartialAssignmentsData(List<String> table) {
@@ -927,7 +973,7 @@ public class Input {
 
 
 
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // helper methods...
 

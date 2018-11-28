@@ -445,7 +445,9 @@ public class Input {
     }	
     
 
+
     // ~~~~~~~~~~~~~~~~NOTE: remove the error msgs from these functions?
+
 
 
     // return True if no error occurred...
@@ -464,6 +466,7 @@ public class Input {
         }
         return true;
     }
+
 
 
     //~~~~~~~~~~~ NOTE: LATER ON WE NEED TO CHECK THAT NUMBER OF SLOTS (courseslots + labslots) > 0 and NUMBER OF COURSES (lectures + labs) > 0, can just have boolean flags to set true if we enter the for loops (or later check if list is size 0) ~~~~~~~~~~~~~~~~~~ 
@@ -532,149 +535,80 @@ public class Input {
     }
 
 
-    // ~~~~~~~~~~~~~~~~~~~~~UPDATE THIS~~~~~~~~~~~~~~~~~~~~~~~~~
+    
     // pretty close to setCourseSlotsData()
     // return True if no error occurred...
     private boolean setLabSlotsData(List<String> table) {
 
-        return true;
-        /*
-        for (int i = 0; i < table.size(); i++) { // loop line by line
-            String[] segments = table.get(i).split(","); // 1. split line by commas
-            // 2. make sure we have expected number of segments
-            if (segments.length != 4) {
-                System.out.println("Error: invalid lab slot");
-                return false;
-            }
-            // get here if we have proper number of segments...
-            // 3. see if each segment is valid input and if so keep track of it, make sure to trim each segment of leading and trailing whitespace and allow case-insensitivity?
-
-            // NOTE: here we are just checking if the segments are in an understandable form, then later on we will check if our created Slot is a valid slot
-            // ex. here we just check if a time is in valid HH:MM format ranging from 00:00 to 23:59, NOTE: im writing this to allow 03:00, 3:00, but NOT 3:0, thus HH:MM = H:MM
-
-            // first segment = Day
-            Slot.Day day;
-            String seg0 = segments[0].trim().toUpperCase();
-            switch (seg0) {
-                case "MO":
-                    day = Slot.Day.MO;
-                    break;
-                case "TU":
-                    day = Slot.Day.TU;
-                    break;
-                case "FR":
-                    day = Slot.Day.FR;
-                    break;
-                default:
-                    System.out.println("Error: invalid lab slot"); // just using a general msg here
-                    return false;
-            }
-            // get here if day was initialized properly
-
-            // second segment = Start time
-            int startHour;
-            int startMinute;
-            String seg1 = segments[1].trim(); // no need for uppercase since not working with letters here
-            String[] subsegs_of_seg1 = seg1.split(":");
-            if (subsegs_of_seg1.length != 2) {
-                System.out.println("Error: invalid lab slot");
-                return false;
-            } 
-
-            // ~~~~~~~~~~ what is Integer.parseInt("1 1"); i would think an exception, but ill try it out when testing, also parseInt of a float?
-            // make sure parseInt works for 00 and 0X, i'm pretty sure this works, note: in slot we will store the time as 0,1,2,...,10,11 (not 00, 01, but we can format this for output printing later)
-
-            // must have HH:MM or H:MM
-            if ((subsegs_of_seg1[0].length() != 1 && subsegs_of_seg1[0].length() != 2) || subsegs_of_seg1[1].length() != 2) {
-                System.out.println("Error: invalid lab slot");
+        for (int i = 0; i < table.size(); i++) { // loop line by line...
+            String line = table.get(i); // it is TRIMMED AND NON-BLANK string
+            String[] segments = line.split(","); // split line by commas
+            
+            if (segments.length != 4) { // make sure line has 4 parts
                 return false;
             }
 
-            try {
-                startHour = Integer.parseInt(subsegs_of_seg1[0]);
-                startMinute = Integer.parseInt(subsegs_of_seg1[1]);
-            }
-            catch (NumberFormatException e) {
-                System.out.println("Error: invalid lab slot");
+            String dayString = segments[0].trim();
+            String timeString = segments[1].trim();
+            String labmaxString = segments[2].trim();
+            String labminString = segments[3].trim();
+
+            Slot newSlot = getNewSlot(dayString, timeString, false);
+            if (newSlot == null) {
                 return false;
             }
+    
+            // now set the max/min...
+            // RULES: each must be a non-negative int (e.g. even 0000001 will be accepted as 1)
 
-            // now make sure in range 00:00 to 23:59
-            if (startHour < 0 || startHour > 23 || startMinute < 0 || startMinute > 59) {
-                System.out.println("Error: invalid lab slot");
-                return false;
-            }
-            // get here if times are valid times (but still need to check slot validity later)
-
-            // third segment = labmax, 4th segment = labmin
             int labmax;
             int labmin;
-            String seg2 = segments[2].trim(); // no need for uppercase
-            String seg3 = segments[3].trim(); // no need for uppercase
 
             try {
-                labmax = Integer.parseInt(seg2);
-                labmin = Integer.parseInt(seg3);
+                labmax = Integer.parseInt(labmaxString);
+                labmin = Integer.parseInt(labminString);
             }
             catch (NumberFormatException e) {
-                System.out.println("Error: invalid lab slot");
                 return false;
             }
 
-            if (labmax < 0 || labmin < 0 || (labmax < labmin)) { // ~~~~maybe if labmax < labmin, we output no valid solution instead?
-                System.out.println("Error: invalid lab slot");
+            if (labmax < 0 || labmin < 0 || (labmax < labmin)) { // ~~~~~~~~~~~~~~maybe labmin can be > labmax, but the soft penalty will always be added
                 return false;
             }
-            
-            // get here if all 4 fields are set properly
 
+            String hashKey = newSlot._hashKey;
 
-
-            String hashKey = day.name() + Integer.toString(startHour) + Integer.toString(startMinute); // ~~~~~~~~test that this is consistent
-            int hashIndex = _mapSlotToIndex.size(); // thus the new index is the size of map. ex. it contains 3 slots already (0,1,2), now we want to put this 4th slot at index 3
-            Slot newSlot = new Slot(hashKey, hashIndex, day, startHour, startMinute);
-            newSlot._labmax = labmax;
-            newSlot._labmin = labmin;
-            if (!newSlot.checkSlotValidity()) {
-                System.out.println("Error: invalid lab slot");
-                return false;
-            }
-            
-            if (_mapSlotToIndex.containsKey(hashKey)) { // if this slot was already found in file...
-
-                int theIndex = _mapSlotToIndex.get(hashKey);
-
-                if (_slotList.get(theIndex)._isLabSlot) { // if we found this slot already under lab slot header... (bad duplicate) 
-                    System.out.println("Error: duplicate lab slot"); // ~~~~~~~~~~~~~~~~~~~~~~~~~Figure out what to do with duplicates~~~~~~~~~~~~~~~~~~~~~~~~~~
+            // NOTE: 2 ways of hashkey already existing...
+            // 1. only found before under CourseSlots (good, just overwrite lab fields)
+            // 2. found before under LabSlots (BAD, - duplicate definition)
+            // RIGHT NOW duplicates are treated as an error, since they could list differing max/min
+            if (_mapSlotToIndex.containsKey(hashKey)) {
+                int exHashIndex = _mapCourseToIndex.get(hashKey); // get the existing hash index
+                if (_slotList.get(exHashIndex)._isLabSlot) { // if we have a duplicate lab slot definition...
                     return false;
                 }
-                else { // we found this slot before (but it was under course slot header only)
-                    // need to just overwrite these 3 fields (everything else is same)
-                    _slotList.get(theIndex)._labmax = labmax;
-                    _slotList.get(theIndex)._labmin = labmin;
-                    _slotList.get(theIndex)._isLabSlot = true;
+                else { // we already only found this slot under CourseSlots...
+                    // just need to update the lab fields...
+                    _slotList.get(exHashIndex)._labmax = labmax;
+                    _slotList.get(exHashIndex)._labmin = labmin;
+                    _slotList.get(exHashIndex)._isLabSlot = true;
                 }
+            }
+             
+            // get here if this is the first time this slot has been found in file...
 
-            }
-            else { // if this is the first time finding this slot in file (didn't find it before under course slots header)
-                newSlot._isLabSlot = true; // flag that we found this slot under Lab slots header
-                _mapSlotToIndex.put(hashKey, hashIndex); // record that we have found this slot in file (just in case it shows up again)
-                _slotList.add(newSlot); // add this slot to end of list
-            }
-            
+            int hashIndex = newSlot._hashIndex;
+
+            newSlot._labmax = labmax;
+            newSlot._labmin = labmin;
+             
+            _mapSlotToIndex.put(hashKey, hashIndex); // record that we have found this slot in file (just in case it shows up again)
+            _slotList.add(newSlot); // add this slot to end of list
+
         }
 
         return true;
-        */
     }
-
-
-
-
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
 
 
 
@@ -710,7 +644,6 @@ public class Input {
         }
 
         return true;
-
     }
 
 
@@ -752,7 +685,6 @@ public class Input {
         }
 
         return true;
-
     }
 
 

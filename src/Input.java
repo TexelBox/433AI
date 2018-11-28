@@ -852,12 +852,24 @@ public class Input {
 
 
 
-    // Param: line (non-blank and trimmed string)
+    // Param: line (any string)
     // Return: NULL (if error occurred)
     // Return: Course instance created from this line
     private Course getNewCourse(String line) {
 
-        String[] segments = line.split("\\s+"); // split line by whitespace
+        if (line == null) {
+            return null;
+        }
+
+        String lineTrimmed = line.trim();
+
+        if (lineTrimmed.isEmpty()) {
+            return null;
+        }
+
+        // get here if we have a non-blank trimmed string
+
+        String[] segments = lineTrimmed.split("\\s+"); // split line by whitespace
 
         if (segments.length == 4 || segments.length == 6) {
 

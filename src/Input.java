@@ -487,7 +487,7 @@ public class Input {
             String coursemaxString = segments[2].trim();
             String courseminString = segments[3].trim();
 
-            Slot newSlot = getNewSlot(dayString, timeString, true);
+            Slot newSlot = getNewSlot(dayString, timeString, true, true);
             if (newSlot == null) {
                 return false;
             }
@@ -553,7 +553,7 @@ public class Input {
             String labmaxString = segments[2].trim();
             String labminString = segments[3].trim();
 
-            Slot newSlot = getNewSlot(dayString, timeString, false);
+            Slot newSlot = getNewSlot(dayString, timeString, false, true);
             if (newSlot == null) {
                 return false;
             }
@@ -689,16 +689,6 @@ public class Input {
 
 
 
-
-
-
-
-
-    // TODO...
-
-
-    // NOTE: ",CPSC 433 LEC 01" will break this currently since we pass in an empty left string, so update newCourse to return NULL on empty or null input. Also, might as well trim it to be safe
-
     // return True if no error occurred...
     private boolean setNotCompatibleData(List<String> table) {
 
@@ -742,28 +732,93 @@ public class Input {
         }
 
         return true;
-
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
 
     // return True if no error occurred...
     private boolean setUnwantedData(List<String> table) {
 
+        for (int i = 0; i < table.size(); i++) { // loop line by line
+            String line = table.get(i); // is a non-blank trimmed line
+            String[] segments = line.split(","); // 1. split line by commas
+            if (segments.length != 3) {
+                return false;
+            }
+
+            String seg0 = segments[0].trim();
+            String seg1 = segments[1].trim();
+            String seg2 = segments[2].trim();
+
+            Course courseInfo = getNewCourse(seg0);
+
+            if (courseInfo == null) { // if this string couldn't be parsed...
+                return false;
+            }
+
+            // get here if course fits format
+
+            Slot slotInfoLEC = getNewSlot(seg1, seg2, true, false); // no verification!
+            Slot slotInfoLAB = getNewSlot(seg1, seg2, false, false); // no verification!
+
+            if (slotInfoLEC == null && slotInfoLAB == null) { // if these 2 strings couldn't be parsed (violated format)
+                return false;
+            }
+
+            // get here if slot fits either courseslot format or labslot format or both
+
+            // now that we have checked for typos, we can check if the course is defined in our file
+
+            String courseHashKey = courseInfo._hashKey;
+
+            if (!_mapCourseToIndex.containsKey(courseHashKey)) { // if line has a valid course, but wasn't defined in our file, we can skip it
+                continue; // skip this line
+            }
+            // get here if it is defined so we can get its hashIndex
+            int courseHashIndex = _mapCourseToIndex.get(courseHashKey);
+
+            // Now we can use the hashmap instead to check validity (since only valid and defined slots got hashed) 
+
+            // use one of the infos that isn't null (since we know theres at least 1, if both are !null, then we can use either since we just need the hashkey which is the same)
+            String slotHashKey;
+            if (slotInfoLEC != null) {
+                slotHashKey = slotInfoLEC._hashKey;
+            }
+            else { // slotInfoLAB != null
+                slotHashKey = slotInfoLAB._hashKey;
+            }
+
+            if (!_mapSlotToIndex.containsKey(slotHashKey)) { // slot fits format, but it isn't VALID or DEFINED
+                continue; // skip this line
+            }
+            // get here if it is valid and defined, so we can get its hashIndex
+            int slotHashIndex = _mapSlotToIndex.get(slotHashKey);
+
+            // flag this course and this slot as unwanted
+
+            _unwanteds[courseHashIndex][slotHashIndex] = true;
+
+        }    
+
         return true;
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// TODO...
+
 
     // return True if no error occurred...
     private boolean setPreferencesData(List<String> table) {
@@ -782,6 +837,10 @@ public class Input {
 
         return true;
     }
+
+
+
+
 
 
 
@@ -990,9 +1049,10 @@ public class Input {
     // Param: dayString (any string)
     // Param: timeString (any string)
     // Param: isCourseSlot (if false, then we have a labslot)
+    // Param: toVerify (if false, only check for matching format, if true also check that this slot is one of the valid university slots)
     // Return: NULL (if error occurred)
     // Return: Slot instance created from this line
-    private Slot getNewSlot(String dayString, String timeString, boolean isCourseSlot) {
+    private Slot getNewSlot(String dayString, String timeString, boolean isCourseSlot, boolean toVerify) {
 
         if (dayString == null || timeString == null) {
             return null;
@@ -1087,22 +1147,16 @@ public class Input {
         else {
             newSlot._isLabSlot = true;
         }
-        if (!newSlot.verifySlotValidity()) {
-            return null;
+
+        if (toVerify) {
+            if (!newSlot.verifySlotValidity()) {
+                return null;
+            }
+
+            // otherwise, get here with a partial slot that is valid
         }
-        
-        // otherwise, get here with a partial slot that is valid
         
         return newSlot;         
     }
 
 }
-
-
-// ~~~~~~~~~NOTE: since this class is singleton, we can put hashIndex inside the Course and Slot classes to auto-compute then we have an undefined class if the index is higher than S
-
-// ~~~~~~~~~~NOTE: also write a getNewSlot(str1, str2, str3=SOMESPECIALSTRING, str3=SOMESPECIALSTRING)
-// then if we pass in somespecial string, then we just want to get the hashKey of this slot if the str1 and str2 are valid
-// otherwise we actually want to get the instance back for setLabSlots and setCourseSlots
-
-// NOTE: if a line specifies constraints on a course that supposedly was written on a line before, but wasn't, then just ignore the line

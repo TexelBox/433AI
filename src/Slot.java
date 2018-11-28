@@ -1,6 +1,11 @@
 
 // ~~~~~~then have the ending time be based on the day? (is it also based on the type of course assigned to it?)
 
+// NOTE: must have H:MM or HH:MM, 
+// 0:00 == 00:00
+// from 0:00 to 23:59 will be accecpted as a valid time, then later checked inside this class to be a valid slot
+// NOTE: 10 :00 not accepted, 10: 00 not accepted, 10 : 00 not accepted, 10:00 only accepted
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,33 +13,87 @@ public class Slot {
     
     public enum Day {MO, TU, FR};
 
-    public String _hashKey; // for lookup of its index in hashmap, init this when we construct this object and push its key/value pair into hashmap
     public int _hashIndex; 
 
     public Day _day; 
 
-    public int _startHour;
-    public int _startMinute;
+    public String _startHourStr;
+    public String _startMinuteStr; 
 
-    public int _coursemax = 0; 
+    public int _startHourNum;
+    public int _startMinuteNum;
+
+    //public int _startHour;
+    //public int _startMinute;
+
+    public int _coursemax = 0; // ~~~~~~~~~~~~~~~~~~~~~~~~~~~THESE 4 get set externally~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     public int _coursemin = 0;
     public int _labmax = 0;
     public int _labmin = 0;
 
     public boolean _isEveningSlot;
 
-    public List<Integer> _courseIndices = new ArrayList<Integer>(); // current indices of courses assigned to this slot
+    public boolean _isCourseSlot = false; // set true if this slot was found under CourseSlot header, ~~~~~~~~~~~~~~~~~~~these 2 are SET EXTERNALLY~~~~~~~~~~~~~~~~~~~~~~
+    public boolean _isLabSlot = false; // set true if this slot was found under LabSlot header 
 
+    public String _outputID; // e.g. MO, 10:00
+
+    public String _hashKey; // for lookup of its index in hashmap, init this when we construct this object and push its key/value pair into hashmap
+
+
+
+
+    // algorithm stuff...
+    public List<Integer> _courseIndices = new ArrayList<Integer>(); // current indices of courses assigned to this slot
     public int _lectureCount = 0; // number of lectures in _courseIndices 
     public int _labCount = 0; // number of labs/tuts in _courseIndices
 
-    public boolean _isCourseSlot = false; // set true if this slot was found under CourseSlot header
-    public boolean _isLabSlot = false; // set true if this slot was found under LabSlot header 
+    
+
+
+
+    public Slot(int hashIndex, Day day, String startHourStr, String startMinuteStr) {
+        _hashIndex = hashIndex;
+        _day = day;
+        _startHourStr = startHourStr;
+        _startMinuteStr = startMinuteStr;
+        setTimeNums();
+        setEveningFlag();
+        setOutputID();
+        setHashKey();
+    }
+
+    // this assumes that the 2 strings are numeric
+    private void setTimeNums() {
+        _startHourNum = Integer.parseInt(_startHourStr);
+        _startMinuteNum = Integer.parseInt(_startMinuteStr);            
+    }
+
+    private void setEveningFlag() {
+        _isEveningSlot = _startHourNum >= 18;
+    }
+
+    private void setOutputID() {
+        _outputID = _day.name() + ", " + _startHourStr + ":" + _startMinuteStr;
+    }
+
+    private void setHashKey() {
+        _hashKey = _day.name() + ":" + Integer.toString(_startHourNum) + ":" + _startMinuteStr; // e.g. MO, 00:00 becomes MO:0:00, synonymously, MO, 0:00 becomes MO:0:00 (same hash)
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~TODO
+    // check that all this data is in fact a valid slot per assignment desc.
+    public boolean verifySlotValidity() {
+        return true;
+    }
+
+
 
     // have function to test if this is a valid slot which the constructor can call (or when we change data?)
 
     // have function to test if 2 slots are overlapping (their interval (depends on day) overlaps), could be static so it can be called from the algorithm easier, or have it check for an overlap with this slot
 
+    /*
     public Slot(String hashKey, int hashIndex, Day day, int startHour, int startMinute) {
         _hashKey = hashKey;
         _hashIndex = hashIndex;
@@ -43,19 +102,21 @@ public class Slot {
         _startMinute = startMinute;
         setEveningFlag();
     }
+    */
 
+    /*
     private void setEveningFlag() {
         _isEveningSlot = _startHour >= 18;
     }
+    */
 
-
-
+    /*
     // after construction, check that this slot, (which has the proper format for the 4 fields), is one of the VALID slots per the assignment description.
     public boolean checkSlotValidity() { // ~~~~~~~~~~~~~~~~~~~~~~~~~~~TODO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         return true;
     }
-
+    */
 
 
 
@@ -115,11 +176,5 @@ public class Slot {
 
         return true;
     }
-
-
-
-    
-
-
 
 }

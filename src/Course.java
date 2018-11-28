@@ -119,7 +119,7 @@ public class Course {
             else { // if LAB or TUT (synonyms)
                 primaryTypeID = "LAB/TUT";
             }
-            _hashKey = _department + ":" _number + ":" primaryTypeID + ":" _primarySection;
+            _hashKey = _department + ":" + _number + ":" + primaryTypeID + ":" + _primarySection;
         }
         else { // 6 segments
             String primaryTypeID;
@@ -130,7 +130,7 @@ public class Course {
                 primaryTypeID = "LAB/TUT";
             }
             String secondaryTypeID = "LAB/TUT";
-            _hashKey = _department + ":" _number + ":" primaryTypeID + ":" _primarySection + ":" + secondaryTypeID + ":" + _secondarySection;
+            _hashKey = _department + ":" + _number + ":" + primaryTypeID + ":" + _primarySection + ":" + secondaryTypeID + ":" + _secondarySection;
         }
     }
 

@@ -117,10 +117,6 @@ public class Input {
         return instance;
     }
 
-    //
-
-
-
     // fields...
 
     public String _name;
@@ -171,39 +167,16 @@ public class Input {
     // Have an ArrayList<Slot> which is ordered from 0 to n-1
     // Have an ArrayList<Slot> which contains all possible slots (thus this is the superset of the previous line)
 
-
     // INSIDE ALGORITHM:
     // have a vector of size p (number of input slots)
     // ith element corresponds to current slot assignment to 
-
-/*
-    "Name:"
-    "Course slots:"
-    "Lab slots:"
-    "Courses:"
-    "Labs:"
-    "Not compatible:"
-    "Unwanted:"
-    "Preferences:"
-    "Pair:"
-    "Partial assignments:"
-*/
 
     // NOTE: ~~~~~~~~for algorithm, keep track of best assignment as a copy of the arraylsit of slots and have the EVAL stored.
 
     // 10 keynames to find...
     private boolean _nameKeyFound, _courseSlotsKeyFound, _labSlotsKeyFound, _coursesKeyFound, _labsKeyFound, _notCompatibleKeyFound, _unwantedKeyFound, _preferencesKeyFound, _pairKeyFound, _partialAssignmentsKeyFound;
 
-	//private boolean specialErrorOccurred = false; 
-
-
     // methods...
-
-
-    //public Input() {
-      //  // init...
-    //}
-
 
     // return T or F (was parsing error-free?)
     public boolean parseFile(String filename) throws Exception {
@@ -434,26 +407,12 @@ public class Input {
         int n = _slotList.size(); // N = number of possible slots
         int s = _courseList.size(); // S = number of courses (Lectures + labs/tuts) to schedule
 
-        _notCompatibles = new boolean[s][s];
+        _notCompatibles = new boolean[s][s]; // symmetric
+        _unwanteds = new boolean[s][n];
+        _preferences = new double[s][n];
+        _pairs = new boolean[s][s]; // symmetric
 
-
-
-
-        // TEMP- for visual aid...
-        //public boolean[][] _notCompatibles; 
-
-        //public boolean[][] _unwanteds; 
-    
-
-        //public double[][] _preferences; 
-    
-        //public boolean[][] _pairs;
-
-
-
-
-
-
+        // MAYBE do any other initializtion?
 
         if (!setNotCompatibleData(notCompatibleTable)) {
             System.out.println("Error: Invalid not compatible data");
@@ -507,131 +466,79 @@ public class Input {
     }
 
 
+    //~~~~~~~~~~~ NOTE: LATER ON WE NEED TO CHECK THAT NUMBER OF SLOTS (courseslots + labslots) > 0 and NUMBER OF COURSES (lectures + labs) > 0, can just have boolean flags to set true if we enter the for loops (or later check if list is size 0) ~~~~~~~~~~~~~~~~~~ 
 
     // return True if no error occurred...
     private boolean setCourseSlotsData(List<String> table) {
 
-        // NOTE: LATER ON WE NEED TO CHECK THAT NUMBER OF SLOTS (courseslots + labslots) > 0 and NUMBER OF COURSES (lectures + labs) > 0, can just have boolean flags to set true if we enter the for loops (or later check if list is size 0) ~~~~~~~~~~~~~~~~~~ 
-
-        for (int i = 0; i < table.size(); i++) { // loop line by line
-            String[] segments = table.get(i).split(","); // 1. split line by commas
-            // 2. make sure we have expected number of segments
-            if (segments.length != 4) {
-                System.out.println("Error: invalid course slot");
-                return false;
-            }
-            // get here if we have proper number of segments...
-            // 3. see if each segment is valid input and if so keep track of it, make sure to trim each segment of leading and trailing whitespace and allow case-insensitivity?
-
-            // NOTE: here we are just checking if the segments are in an understandable form, then later on we will check if our created Slot is a valid slot
-            // ex. here we just check if a time is in valid HH:MM format ranging from 00:00 to 23:59, NOTE: im writing this to allow 03:00, 3:00, but NOT 3:0, thus HH:MM = H:MM
-
-            // first segment = Day
-            Slot.Day day;
-            String seg0 = segments[0].trim().toUpperCase();
-            switch (seg0) {
-                case "MO":
-                    day = Slot.Day.MO;
-                    break;
-                case "TU":
-                    day = Slot.Day.TU;
-                    break;
-                default:
-                    System.out.println("Error: invalid course slot"); // just using a general msg here
-                    return false;
-            }
-            // get here if day was initialized properly
-
-            // second segment = Start time
-            int startHour;
-            int startMinute;
-            String seg1 = segments[1].trim(); // no need for uppercase since not working with letters here
-            String[] subsegs_of_seg1 = seg1.split(":");
-            if (subsegs_of_seg1.length != 2) {
-                System.out.println("Error: invalid course slot");
-                return false;
-            } 
-
-            // ~~~~~~~~~~ what is Integer.parseInt("1 1"); i would think an exception, but ill try it out when testing, also parseInt of a float?
-            // make sure parseInt works for 00 and 0X, i'm pretty sure this works, note: in slot we will store the time as 0,1,2,...,10,11 (not 00, 01, but we can format this for output printing later)
-
-            // must have HH:MM or H:MM
-            if ((subsegs_of_seg1[0].length() != 1 && subsegs_of_seg1[0].length() != 2) || subsegs_of_seg1[1].length() != 2) {
-                System.out.println("Error: invalid course slot");
+        for (int i = 0; i < table.size(); i++) { // loop line by line...
+            String line = table.get(i); // it is TRIMMED AND NON-BLANK string
+            String[] segments = line.split(","); // split line by commas
+            
+            if (segments.length != 4) { // make sure line has 4 parts
                 return false;
             }
 
-            try {
-                startHour = Integer.parseInt(subsegs_of_seg1[0]);
-                startMinute = Integer.parseInt(subsegs_of_seg1[1]);
-            }
-            catch (NumberFormatException e) {
-                System.out.println("Error: invalid course slot");
+            String dayString = segments[0].trim();
+            String timeString = segments[1].trim();
+            String coursemaxString = segments[2].trim();
+            String courseminString = segments[3].trim();
+
+            Slot newSlot = getNewSlot(dayString, timeString, true);
+            if (newSlot == null) {
                 return false;
             }
+    
+            // now set the max/min...
+            // RULES: each must be a non-negative int (e.g. even 0000001 will be accepted as 1)
 
-            // now make sure in range 00:00 to 23:59
-            if (startHour < 0 || startHour > 23 || startMinute < 0 || startMinute > 59) {
-                System.out.println("Error: invalid course slot");
-                return false;
-            }
-            // get here if times are valid times (but still need to check slot validity later)
-
-            // third segment = coursemax, 4th segment = coursemin
             int coursemax;
             int coursemin;
-            String seg2 = segments[2].trim(); // no need for uppercase
-            String seg3 = segments[3].trim(); // no need for uppercase
 
             try {
-                coursemax = Integer.parseInt(seg2);
-                coursemin = Integer.parseInt(seg3);
+                coursemax = Integer.parseInt(coursemaxString);
+                coursemin = Integer.parseInt(courseminString);
             }
             catch (NumberFormatException e) {
-                System.out.println("Error: invalid course slot");
                 return false;
             }
 
-            if (coursemax < 0 || coursemin < 0 || (coursemax < coursemin)) { // ~~~~maybe if coursemax < coursemin, we output no valid solution instead?
-                System.out.println("Error: invalid course slot");
+            if (coursemax < 0 || coursemin < 0 || (coursemax < coursemin)) { // ~~~~~~~~~~~~~~maybe coursemin can be > coursemax, but the soft penalty will always be added
                 return false;
             }
-            
-            // get here if all 4 fields are set properly
 
-
-
-            String hashKey = day.name() + Integer.toString(startHour) + Integer.toString(startMinute); // ~~~~~~~~test that this is consistent
-            int hashIndex = _mapSlotToIndex.size(); // thus the new index is the size of map. ex. it contains 3 slots already (0,1,2), now we want to put this 4th slot at index 3
-            Slot newSlot = new Slot(hashKey, hashIndex, day, startHour, startMinute);
             newSlot._coursemax = coursemax;
             newSlot._coursemin = coursemin;
-            if (!newSlot.checkSlotValidity()) {
-                System.out.println("Error: invalid course slot");
-                return false;
-            }
-            
-            if (_mapSlotToIndex.containsKey(hashKey)) { // due to the order of the input file, the only way this slot was already found, is that it was under course slots header (_courseSlot = true, so no need to check)
-                System.out.println("Error: duplicate course slot"); // ~~~~~~~~~~~~~~~~~~~~~~~~~Figure out what to do with duplicates~~~~~~~~~~~~~~~~~~~~~~~~~~
-                return false;
-            }
 
-            // get here if this is the first time this slot has been found in file
-            newSlot._isCourseSlot = true; // flag that we found this slot under Course slots header
+            String hashKey = newSlot._hashKey;
+            int hashIndex = newSlot._hashIndex;
+
+            // ~~~~~~~~~~~~~~~~~~~~~NOTE: I don't think I need to check slot validity again?
+
+            // ~~~~~~~~~~~~~~~~NOTE: due to the order of the input file, the only way this slot was already found, is that it was under course slots header (_courseSlot = true, so no need to check this flag)
+            // RIGHT NOW duplicates are treated as an error, since they could list differing max/min
+            if (_mapSlotToIndex.containsKey(hashKey)) { 
+                return false;
+            }
+             
+            // get here if this is the first time this slot has been found in file...
+             
             _mapSlotToIndex.put(hashKey, hashIndex); // record that we have found this slot in file (just in case it shows up again)
             _slotList.add(newSlot); // add this slot to end of list
-            
+
         }
 
         return true;
     }
 
 
-
+    // ~~~~~~~~~~~~~~~~~~~~~UPDATE THIS~~~~~~~~~~~~~~~~~~~~~~~~~
     // pretty close to setCourseSlotsData()
     // return True if no error occurred...
     private boolean setLabSlotsData(List<String> table) {
 
+        return true;
+        /*
         for (int i = 0; i < table.size(); i++) { // loop line by line
             String[] segments = table.get(i).split(","); // 1. split line by commas
             // 2. make sure we have expected number of segments
@@ -758,6 +665,7 @@ public class Input {
         }
 
         return true;
+        */
     }
 
 
@@ -893,8 +801,8 @@ public class Input {
             // get here if both courses are defined...
             // now update array (symmetric)...
 
-            int leftHashIndex = _mapCourseToIndex.get(leftHashIndex);
-            int rightHashIndex = _mapCourseToIndex.get(rightHashIndex);
+            int leftHashIndex = _mapCourseToIndex.get(leftHashKey);
+            int rightHashIndex = _mapCourseToIndex.get(rightHashKey);
 
             _notCompatibles[leftHashIndex][rightHashIndex] = true; // flag both cells (symmetrically across diagonal)
             _notCompatibles[rightHashIndex][leftHashIndex] = true;            
@@ -1133,6 +1041,117 @@ public class Input {
 
     }
 
+
+
+    // Param: dayString (any string)
+    // Param: timeString (any string)
+    // Param: isCourseSlot (if false, then we have a labslot)
+    // Return: NULL (if error occurred)
+    // Return: Slot instance created from this line
+    private Slot getNewSlot(String dayString, String timeString, boolean isCourseSlot) {
+
+        if (dayString == null || timeString == null) {
+            return null;
+        }
+
+        String dayStringTrimmed = dayString.trim();
+        String timeStringTrimmed = timeString.trim();
+
+        if (dayStringTrimmed.isEmpty() || timeStringTrimmed.isEmpty()) {
+            return null;
+        }
+
+        // 1. DAY
+        // RULES: must be exactly "MO", "TU" for CourseSlot (additonally "FR" for LabSlot)
+
+        Slot.Day day;
+        if (isCourseSlot) {
+            switch(dayStringTrimmed) {
+                case "MO":
+                    day = Slot.Day.MO;
+                    break;
+                case "TU":
+                    day = Slot.Day.TU;
+                    break;
+                default:
+                    return null;
+            }
+        }
+        else {
+            switch(dayStringTrimmed) {
+                case "MO":
+                    day = Slot.Day.MO;
+                    break;
+                case "TU":
+                    day = Slot.Day.TU;
+                    break;
+                case "FR":
+                    day = Slot.Day.FR;
+                    break;
+                default:
+                    return null;
+            }
+        }
+
+
+
+        // 2. START TIME
+        // RULES: form H:MM or HH:MM, where 0:00 == 00:00, and between 00:00 and 23:59
+        // Also, 10 : 00, 10: 00, 10 :00 not allowed. only 10:00 is allowed
+
+        String startHourStr;
+        String startMinuteStr;
+        String[] timeSegments = timeStringTrimmed.split(":");
+
+        if (timeSegments.length != 2) {
+            return null;
+        }
+
+        String hourStr = timeSegments[0];
+        String minuteStr = timeSegments[1];
+
+        if ((hourStr.length() != 1 && hourStr.length() != 2) || minuteStr.length() != 2) { // if we don't have H:MM or HH:MM
+            return null;
+        }
+
+        // now check that H or HH is numeric string and between 0 and 23
+        // also that MM is numeric string and between 0 and 59
+
+        if (!isNumeric(hourStr) || !isNumeric(minuteStr)) { // make sure numeric
+            return null;
+        }
+
+        int hourNum = Integer.parseInt(hourStr);
+        int minuteNum = Integer.parseInt(minuteStr);
+
+        // now make sure in range 00:00 to 23:59
+        if (hourNum < 0 || hourNum > 23 || minuteNum < 0 || minuteNum > 59) {
+            return null;    
+        }
+
+        // get here if times are valid times (but still need to check slot validity later)
+        startHourStr = hourStr;
+        startMinuteStr = minuteStr;
+
+
+        
+        int hashIndex = _mapSlotToIndex.size(); // thus the new index is the size of map. ex. it contains 3 slots already (0,1,2), now we want to put this 4th slot at index 3
+        Slot newSlot = new Slot(hashIndex, day, startHourStr, startMinuteStr);
+        if (isCourseSlot) {
+            newSlot._isCourseSlot = true;
+        }
+        else {
+            newSlot._isLabSlot = true;
+        }
+        if (!newSlot.verifySlotValidity()) {
+            return null;
+        }
+        
+        // otherwise, get here with a partial slot that is valid
+        
+        return newSlot;         
+    }
+
 }
 
 
@@ -1141,9 +1160,5 @@ public class Input {
 // ~~~~~~~~~~NOTE: also write a getNewSlot(str1, str2, str3=SOMESPECIALSTRING, str3=SOMESPECIALSTRING)
 // then if we pass in somespecial string, then we just want to get the hashKey of this slot if the str1 and str2 are valid
 // otherwise we actually want to get the instance back for setLabSlots and setCourseSlots
-
-
-
-
 
 // NOTE: if a line specifies constraints on a course that supposedly was written on a line before, but wasn't, then just ignore the line

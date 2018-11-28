@@ -1012,171 +1012,6 @@ public class Input {
 
 
 
-
-
-/*
-
-
-    // Param: line (non-blank and trimmed string)
-    // Return: NULL (if error occurred)
-    // Return: Course instance created from this line
-    private Course getNewCourse(String line) {
-
-        String[] segments = line.split("\\s+"); // split line by whitespace
-
-        if (segments.length == 4 || segments.length == 6) {
-
-            // no need to trim a segment since the split by whitespace did that automatically
-            // check if department identifier is alphabetic and if so make it uppercase and move on
-
-            String department;
-            String seg0 = segments[0];
-            if (!isAlphabetic(seg0)) {
-                return null;
-            }    
-            department = seg0.toUpperCase();
-
-            // next check the number
-
-            int number;
-            String seg1 = segments[1];
-            try {
-                number = Integer.parseInt(seg1);
-            }
-            catch (NumberFormatException e) {
-                return null;
-            }
-
-            if (number < 0) {
-                return null;
-            }
-
-            // next check for LEC, LAB, TUT, LECLAB, or LECTUT (case-insensitive)
-
-            Course.CourseType type;
-            String seg2 = segments[2];
-            if (segments.length == 4) {
-                String typeStr1 = seg2.toUpperCase();
-                switch(typeStr1) {
-                    case "LEC":
-                        type = Course.CourseType.LEC;
-                        break;
-                    case "LAB":
-                        type = Course.CourseType.LAB;
-                        break;
-                    case "TUT":
-                        type = Course.CourseType.TUT;
-                        break;
-                    default:
-                        return null;
-                }
-            }
-            else if (segments.length == 6) {
-                String typeStr1 = seg2.toUpperCase();
-                String seg4 = segments[4];
-                String typeStr2 = seg4.toUpperCase();
-                if (typeStr1.equals("LEC")) {
-                    switch(typeStr2) {
-                        case "LAB":
-                            type = Course.CourseType.LECLAB;
-                            break;
-                        case "TUT":
-                            type = Course.CourseType.LECTUT;
-                            break;
-                        default:
-                            return null;
-                    }
-                }
-                else {
-                    return null;
-                }
-            }
-            
-
-
-
-
-
-
-
-
-
-
-            
-
-
-            // next check for section
-
-            int primarySection;
-            String seg3 = segments[3];
-            try {
-                primarySection = Integer.parseInt(seg3);
-            }
-            catch (NumberFormatException e) {
-                System.out.println("Error: invalid course");
-                return false;
-            }
-
-            if (primarySection < 0) {
-                System.out.println("Error: invalid course");
-                return false;
-            }
-
-            // now we know we have a valid course (since we dont have to check that this course actually exists at the university)
-
-            String hashKey = department + Integer.toString(number) + type.name() + Integer.toString(primarySection);
-            int hashIndex = _mapCourseToIndex.size();
-            Course newCourse = new Course(hashKey, hashIndex, department, number, type, primarySection);
-
-            // if this course line was already found (duplicate, but no error (just dont add this course again))
-            if (!_mapCourseToIndex.containsKey(hashKey)) { // thus, if this is the first time finding this course...
-                _mapCourseToIndex.put(hashKey, hashIndex); // record that we have found this course in file (just in case it shows up again)
-                _courseList.add(newCourse); // add this course to end of list
-            }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        }
-        else {
-            return null;
-        }
-    
-    }
-
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // Param: line (non-blank and trimmed string)
     // Return: NULL (if error occurred)
     // Return: Course instance created from this line
@@ -1299,6 +1134,13 @@ public class Input {
     }
 
 }
+
+
+// ~~~~~~~~~NOTE: since this class is singleton, we can put hashIndex inside the Course and Slot classes to auto-compute then we have an undefined class if the index is higher than S
+
+// ~~~~~~~~~~NOTE: also write a getNewSlot(str1, str2, str3=SOMESPECIALSTRING, str3=SOMESPECIALSTRING)
+// then if we pass in somespecial string, then we just want to get the hashKey of this slot if the str1 and str2 are valid
+// otherwise we actually want to get the instance back for setLabSlots and setCourseSlots
 
 
 

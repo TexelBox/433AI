@@ -136,9 +136,9 @@ public class Input {
     public boolean[][] _unwanteds; // [i][j] = true if course i can't be assigned to slot j (rows are courses, cols are slots)
 
     // WATCH OUT! (the line is read L->R with Slot -> course which makes you want to put i for slot and j for course, but to keep consisten with other data structures, we use i for course and j for slot)
-    // not sure if this should be int or double
+    // IT MUST BE A NATURAL NUMBER
     // set size to be MxN like _unwanteds
-    public double[][] _preferences; // [i][j] = x if preference value of course i with slot j is x, 0.0 by default
+    public int[][] _preferences; // [i][j] = x if preference value of course i with slot j is x, 0 by default
 
     // init size as NxN (N = number of courses)
     public boolean[][] _pairs; // [i][j] = true if course i is paired with course j, false by default, maybe init diagonal to be true (reflexive property of relation)
@@ -409,7 +409,7 @@ public class Input {
 
         _notCompatibles = new boolean[s][s]; // symmetric
         _unwanteds = new boolean[s][n];
-        _preferences = new double[s][n];
+        _preferences = new int[s][n];
         _pairs = new boolean[s][s]; // symmetric
 
         // MAYBE do any other initializtion?
@@ -734,7 +734,7 @@ public class Input {
         return true;
     }
 
-    
+
 
     // return True if no error occurred...
     private boolean setUnwantedData(List<String> table) {
@@ -804,8 +804,91 @@ public class Input {
     }
 
 
+    
+    // return True if no error occurred...
+    private boolean setPreferencesData(List<String> table) {
+
+        for (int i = 0; i < table.size(); i++) { // loop line by line
+            String line = table.get(i); // is a non-blank trimmed line
+            String[] segments = line.split(","); // 1. split line by commas
+            if (segments.length != 4) {
+                return false;
+            }
+
+            String seg0 = segments[0].trim(); // day
+            String seg1 = segments[1].trim(); // time
+            String seg2 = segments[2].trim(); // course identifier
+            String seg3 = segments[3].trim(); // preference value
+
+            Slot slotInfoLEC = getNewSlot(seg0, seg1, true, false); // no verification!
+            Slot slotInfoLAB = getNewSlot(seg0, seg1, false, false); // no verification!
+
+            if (slotInfoLEC == null && slotInfoLAB == null) { // if these 2 strings couldn't be parsed (violated format)
+                return false;
+            }
+            // get here if slot fits either courseslot format or labslot format or both
+
+            Course courseInfo = getNewCourse(seg2);
+
+            if (courseInfo == null) { // if this string couldn't be parsed...
+                return false;
+            }
+            // get here if course fits format
+
+            int prefValue;
+            try {
+                prefValue = Integer.parseInt(seg3);
+            }
+            catch (NumberFormatException e) {
+                return false;
+            }
+
+            if (prefValue < 0) {
+                return false;
+            }
+
+            // get here if prefValue fits format (RULE: any string that can be parsed as a natural number)
+            
+            // now that we have checked for typos, we can check VALIDITY/DEFINITION of slot then course
+
+            // Now we can use the hashmap instead to check validity (since only valid and defined slots got hashed) 
+
+            // use one of the infos that isn't null (since we know theres at least 1, if both are !null, then we can use either since we just need the hashkey which is the same)
+
+            String slotHashKey;
+            if (slotInfoLEC != null) {
+                slotHashKey = slotInfoLEC._hashKey;
+            }
+            else { // slotInfoLAB != null
+                slotHashKey = slotInfoLAB._hashKey;
+            }
+
+            if (!_mapSlotToIndex.containsKey(slotHashKey)) { // slot fits format, but it isn't VALID or DEFINED
+                continue; // skip this line
+            }
+            // get here if it is valid and defined, so we can get its hashIndex
+            int slotHashIndex = _mapSlotToIndex.get(slotHashKey);
 
 
+            // now check for course definition
+            String courseHashKey = courseInfo._hashKey;
+
+            if (!_mapCourseToIndex.containsKey(courseHashKey)) { // if line has a valid course, but wasn't defined in our file, we can skip it
+                continue; // skip this line
+            }
+            // get here if it is defined so we can get its hashIndex
+            int courseHashIndex = _mapCourseToIndex.get(courseHashKey);
+
+
+            // ~~~~~~~~~~~~~~~~~~~~~~~NOTE: currently if we get a duplicate line, we will just treat it as an overwrite.
+
+            // update pref value...
+            _preferences[courseHashIndex][slotHashIndex] = prefValue;
+
+        }    
+
+        return true;        
+    }
 
 
 
@@ -820,11 +903,6 @@ public class Input {
 // TODO...
 
 
-    // return True if no error occurred...
-    private boolean setPreferencesData(List<String> table) {
-
-        return true;
-    }
 
     // return True if no error occurred...
     private boolean setPairData(List<String> table) {

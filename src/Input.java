@@ -466,6 +466,13 @@ public class Input {
             return false;
         }
 
+        // all explicit data set correctly...
+
+        if (!postProcessData()) {
+            System.out.println("NO VALID SOLUTION");
+            return false;
+        }
+
         // get here if no errors occurred...
 
         return true; // default return
@@ -1107,13 +1114,41 @@ public class Input {
 
 
 
-
+    // NOTE: ~~~~~~~~~~~~~~~~I need to add inside setCourseSlots, that if we find TU 11:00, then return an error (since no courses can be scheduled to it and the user is contradicting their rules)
 
 
 
     // use this method after all the setData methods are called to do any other post processing to the data structures (like checking for contradictions that result in NO VALID SOLUTION)
     // return FALSE if we can identify that we have NO VALID SOLUTION right now
-    private boolean postProcess() {
+    private boolean postProcessData() {
+
+        /*
+        STUFF TO DO HERE...
+
+        1.  - OR i could just use a 2D boolean NxN array _slotOverlaps which would be symmetric
+            -create private field in this class: ArrayList<Slot>[] _slotOverlaps; which should be initialized to size N (number of slots), [i] corresponds to the list of overlapping slots with slot i
+            -inside Slot.java create a function to check if 'this' slot overlaps with another slot passed as a param. (factor in stuff like type, day, time)
+            -iterate through _slotList and check for overlaps with all entry to the right of it (shifted nested for loops) and update this 2D array.
+            -NOTE: make sure that a slot doesn't overlap with itself (technically it does, but keep it at default FALSE in order to avoid major errors/redundancy)  
+
+        2.  along the diagonal of _notcompatibles, check for a true value, if there is one return false (means the input file had a line saying a course is not-compat with itself) - maybe change to parse error?
+        
+        3. make sure courses and labs of same class are properly init as not-compatible according to specs (ex. have the sharedHashMap and use the sharedHaskkey to set this list right here)
+        - I think it just means that CPSC 433 LEC 01 and CPSC 433 TUT 01 can be in same slot/overlap but CPSC 433 LEC 01 and CPSC 433 LEC 01 TUT 01 can't be!
+        - Also what if the file has both CPSC 433 TUT 01 and CPSC 433 LEC 01 TUT 01?
+        - I know for sure that CPSC 433 LEC 01 and CPSC 433 LEC 02 are not (not-compatible) since there is the soft constraint that if they share same slot/overlap, then we add the pen_section penalty.
+
+        4. for all the partassigns, make sure that that course and slot are also not 'not-compatible', if so, return false
+
+
+
+
+        n. last thing to do should be to check for 313/413 and add 813/913 if needed and also init all the incompatibilities and special rules
+        - we can store them as CPSC 813/913 LAB 01 and if slot TU 18:00 was defined, then set a partassign for this (also make sure its labmax is >= 1 otherwise output no solution), if not defined, can create this slot with labmin = labmax = 1/2
+        - recursively set their not-compatibles
+        - make sure we don't fall into an infinite loop! can mark every course checked?
+        */
+
 
         return true;
     }

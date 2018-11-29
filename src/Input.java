@@ -76,19 +76,19 @@
 
 
     QUESTIONS:
-    - what if Example-name is not specified? (look at 449 case)
-    - should we have a general error message if theres a typo in file?
-    - error for if a keyword missing? (look at 449)
-    - is LEC01, LEC0 1,  possible?
-    - do we need a blank line before next keyword like 449?
+    X what if Example-name is not specified? (look at 449 case)
+    ~ should we have a general error message if theres a typo in file?
+    X error for if a keyword missing? (look at 449)
+    X is LEC01, LEC0 1,  possible? - no this will be a parse error
+    X do we need a blank line before next keyword like 449? - i'm saying no, it doesnt matter
     - what do we do if we are given CPSC 433 LEC 01 is not compatible with CPSC 433 LEC 01 (I would say throw an error since you would never get a valid answer)
     - if one line is CPSC 433 LAB 01 and another line is CPSC 433 TUT 01, do we treat them as the same thing?
     - EVENING CLASSES: is it only LEC 09 or is it >= 9?, is CPSC 433 LEC 09 TUT 01 evening? - i dont think so since its a tut not a 'course section' = lecture
 
     ANSWERS:
     - name can't be a blank line or a keyword
-    - he expects the parsing to go character by character L->R (NL understanding)
-    - this assignment seems to be less focused on the parser, and more on the algorithm (there isnt special error messages), can just have 1 general error msg
+    X he expects the parsing to go character by character L->R (NL understanding) - not doing it this way since we dont have specific parse error msgs
+    X this assignment seems to be less focused on the parser, and more on the algorithm (there isnt special error messages), can just have 1 general error msg
 
 */
 
@@ -129,26 +129,24 @@ public class Input {
     public List<Course> _courseList = new ArrayList<>(); // add a course TO END everytime input file specifies a new course that wasnt mentioned before
 
     // this array is symmetric across diagonal
-    // later on init the size to be square at NxN where N = size of _mapCourseToIndex (number of keys = number of courses to schedule)
+    // later on init the size to be square at SxS where S = size of _mapCourseToIndex (number of keys = number of courses to schedule)
     public boolean[][] _notCompatibles; // default init is false, set _notCompatibles[i][j] = true and _notCompatibles[j][i] = true, if we get line COURSE1, COURSE2 (in not-compatible table) and index(Course1) = i and index(course2) = j
 
-    // later on init the size to be [M][N] where M = size of _mapCourseToIndex (number of courses) and N = size of _mapSlotToIndex (number of available slots)
+    // later on init the size to be [S][N] where S = size of _mapCourseToIndex (number of courses) and N = size of _mapSlotToIndex (number of available slots)
     public boolean[][] _unwanteds; // [i][j] = true if course i can't be assigned to slot j (rows are courses, cols are slots)
 
     // WATCH OUT! (the line is read L->R with Slot -> course which makes you want to put i for slot and j for course, but to keep consisten with other data structures, we use i for course and j for slot)
     // IT MUST BE A NATURAL NUMBER
-    // set size to be MxN like _unwanteds
+    // set size to be SxN like _unwanteds
     public int[][] _preferences; // [i][j] = x if preference value of course i with slot j is x, 0 by default
 
-    // init size as NxN (N = number of courses)
-    public boolean[][] _pairs; // [i][j] = true if course i is paired with course j, false by default, maybe init diagonal to be true (reflexive property of relation)
+    // this array is symmetric across diagonal
+    // init size as SxS (S = number of courses)
+    public boolean[][] _pairs; // [i][j] = true if course i is paired with course j, false by default, maybe init diagonal to be true (reflexive property of relation), nah not gonna do this since it would cause unnecesaey checks that would always be true
 
     // init to size S (S = number of courses)
+    // represent $ as NULL
     public Slot[] _partialAssignments; // [i] = sl, means that course i must assign to slot sl, NULL means no assignment ($)
-
-    // NOTE: could put partial assignment here in a 2D array, but that seems overkill since each course can only have 1 partial assignment, so we could store this as a field of a Course instead. print no possible solution if a course is assigned 2 partial assignments
-
-    // figure out best data structures to store parsed data in here...
 
     // IDEAS:
 
@@ -161,18 +159,11 @@ public class Input {
 
     // we are given a new course/lab identifier on a line, we have that unique string (after some magic like trimming), convert it 
 
-    // Have an 
-
-    // represent $ as NULL
-
-    // Have an ArrayList<Course>, which is ordered from 0 to m-1 - contains all the courses we need to schedule (provided input)
     // Have an ArrayList<ArrayList<Lab>> which is has the outer list ordered from 0 to m-1, and an inner list element ordered from 0 to k-1 - thus list[i] is the list of labs/tuts connected to course c_i. If k=0 then have {} empty list
-    // Have an ArrayList<Slot> which is ordered from 0 to n-1
-    // Have an ArrayList<Slot> which contains all possible slots (thus this is the superset of the previous line)
 
     // INSIDE ALGORITHM:
-    // have a vector of size p (number of input slots)
-    // ith element corresponds to current slot assignment to 
+    // have a vector of size S (S = number of courses)
+    // ith element corresponds to current slot assignment to course with index i
 
     // NOTE: ~~~~~~~~for algorithm, keep track of best assignment as a copy of the arraylsit of slots and have the EVAL stored.
 
@@ -336,7 +327,7 @@ public class Input {
         }
 
         // now we know we dont have a duplicate keyword.
-        // make sure we don't have a missing keywrord...
+        // make sure we don't have a missing keyword...
         if (!_nameKeyFound || !_courseSlotsKeyFound || !_labSlotsKeyFound || !_coursesKeyFound || !_labsKeyFound || !_notCompatibleKeyFound || !_unwantedKeyFound || !_preferencesKeyFound || !_pairKeyFound || !_partialAssignmentsKeyFound) {
             System.out.println("Error: Input file is missing a keyword.");
             return false; // stop parsing
@@ -373,9 +364,6 @@ public class Input {
 
 
         // 4. parse each of the 10 subarrays in order, storing the data into data structure fields of this class.
-
-
-        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~NOTE: I FORGOT PUT IN EACH FUNCTION A CHECK OVER IF THE TABLE LIST IS EMPTY, RIGHT NOW IT WILL JUST RETURN TRUE
 
         if (!setNameData(nameTable)) {
             System.out.println("Error: Invalid name data");
@@ -480,7 +468,7 @@ public class Input {
     
 
 
-    // ~~~~~~~~~~~~~~~~NOTE: remove the error msgs from these functions?
+    // ~~~~~~~~~~~~~~~~NOTE: remove the error msgs from these functions or only have them for debug mode?
 
 
 
@@ -496,14 +484,13 @@ public class Input {
             return false;
         }
         else { // if 1 line
+            // ~~~~~~~~~~~~~~~~~~NOTE: should probably check that this line is not a keyword, if so then return false
             _name = table.get(0);
         }
         return true;
     }
 
 
-
-    //~~~~~~~~~~~ NOTE: LATER ON WE NEED TO CHECK THAT NUMBER OF SLOTS (courseslots + labslots) > 0 and NUMBER OF COURSES (lectures + labs) > 0, can just have boolean flags to set true if we enter the for loops (or later check if list is size 0) ~~~~~~~~~~~~~~~~~~ 
 
     // return True if no error occurred...
     private boolean setCourseSlotsData(List<String> table) {
@@ -556,7 +543,7 @@ public class Input {
 
             // ~~~~~~~~~~~~~~~~~~~~~NOTE: I don't think I need to check slot validity again?
 
-            // ~~~~~~~~~~~~~~~~NOTE: due to the order of the input file, the only way this slot was already found, is that it was under course slots header (_courseSlot = true, so no need to check this flag)
+            // NOTE: due to the order of the input file, the only way this slot was already found, is that it was under course slots header (_courseSlot = true, so no need to check this flag)
             // RIGHT NOW duplicates are treated as an error, since they could list differing max/min
             if (_mapSlotToIndex.containsKey(hashKey)) { 
                 return false;

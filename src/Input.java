@@ -179,6 +179,8 @@ public class Input {
     // 10 keynames to find...
     private boolean _nameKeyFound, _courseSlotsKeyFound, _labSlotsKeyFound, _coursesKeyFound, _labsKeyFound, _notCompatibleKeyFound, _unwantedKeyFound, _preferencesKeyFound, _pairKeyFound, _partialAssignmentsKeyFound;
 
+    private boolean _courseSlotDefined, _labSlotDefined, _courseDefined, _labDefined; // all init are false
+
     // methods...
 
     // return T or F (was parsing error-free?)
@@ -372,7 +374,6 @@ public class Input {
 
         // 4. parse each of the 10 subarrays in order, storing the data into data structure fields of this class.
 
-        // NOTE: must define data structures before doing this
 
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~NOTE: I FORGOT PUT IN EACH FUNCTION A CHECK OVER IF THE TABLE LIST IS EMPTY, RIGHT NOW IT WILL JUST RETURN TRUE
 
@@ -380,6 +381,7 @@ public class Input {
             System.out.println("Error: Invalid name data");
             return false;
         }
+
 
         if (!setCourseSlotsData(courseSlotsTable)) {
             System.out.println("Error: Invalid course slots data");
@@ -391,20 +393,39 @@ public class Input {
             return false;
         }
 
-        // ~~~~~~~~~~~~PUT CHECK HERE that we have at least 1 slot (otherwise output an error - no frames to put in)
+        if (!_courseSlotDefined && !_labSlotDefined) { // if 0 course slots and 0 lab slots were defined...
+            System.out.println("Error: No slots were defined.");
+            return false;
+        }
+
 
         if (!setCoursesData(coursesTable)) {
             System.out.println("Error: Invalid courses data");
             return false;
         }
 
+        if (_courseDefined && !_courseSlotDefined) { // if >= 1 courses were defined but 0 course slots were defined...
+            System.out.println("Error: Courses were defined, but no course slots were defined.");
+            return false;
+        }
+
+
         if (!setLabsData(labsTable)) {
             System.out.println("Error: Invalid labs data");
             return false;
         }
 
-        // ~~~~~~~~~~~~~~~~PUT CHECK HERE that we have at least 1 course (otherwise output an error - nothing to schedule)
+        if (_labDefined && !_labSlotDefined) { // if >= 1 labs were defined but 0 lab slots were defined...
+            System.out.println("Error: Labs were defined, but no lab slots were defined.");
+            return false;
+        }
 
+        if (!_courseDefined && !_labDefined) { // if 0 courses and 0 labs were defined...
+            System.out.println("Error: No courses/labs were defined.");
+            return false;
+        }
+
+        
         // IF EVERTHING IS GOOD...
 
         // init sizes of the arrays...
@@ -480,6 +501,10 @@ public class Input {
     // return True if no error occurred...
     private boolean setCourseSlotsData(List<String> table) {
 
+        if (table.size() == 0) {
+            return true; // emptiness errors are checked externally
+        }
+
         for (int i = 0; i < table.size(); i++) { // loop line by line...
             String line = table.get(i); // it is TRIMMED AND NON-BLANK string
             String[] segments = line.split(","); // split line by commas
@@ -534,6 +559,7 @@ public class Input {
              
             _mapSlotToIndex.put(hashKey, hashIndex); // record that we have found this slot in file (just in case it shows up again)
             _slotList.add(newSlot); // add this slot to end of list
+            _courseSlotDefined = true; // flag that at least 1 course slot was found
 
         }
 
@@ -545,6 +571,10 @@ public class Input {
     // pretty close to setCourseSlotsData()
     // return True if no error occurred...
     private boolean setLabSlotsData(List<String> table) {
+
+        if (table.size() == 0) {
+            return true; // emptiness errors are checked externally
+        }
 
         for (int i = 0; i < table.size(); i++) { // loop line by line...
             String line = table.get(i); // it is TRIMMED AND NON-BLANK string
@@ -610,6 +640,7 @@ public class Input {
              
             _mapSlotToIndex.put(hashKey, hashIndex); // record that we have found this slot in file (just in case it shows up again)
             _slotList.add(newSlot); // add this slot to end of list
+            _labSlotDefined = true; // flag that at least 1 lab slot was found
 
         }
 
@@ -620,6 +651,10 @@ public class Input {
 
     // return True if no error occurred...
     private boolean setCoursesData(List<String> table) {
+
+        if (table.size() == 0) {
+            return true; // emptiness errors are checked externally
+        }
 
         for (int i = 0; i < table.size(); i++) { // loop line by line...
             String line = table.get(i); // it is TRIMMED AND NON-BLANK string
@@ -645,6 +680,7 @@ public class Input {
             if (!_mapCourseToIndex.containsKey(hashKey)) { // if this is the first time finding this lecture...
                 _mapCourseToIndex.put(hashKey, hashIndex); // record that we have found this lecture in file (just in case it shows up again)
                 _courseList.add(newCourse); // add this lecture to end of list
+                _courseDefined = true; // flag that at least 1 course was found
             }
 
         }
@@ -660,6 +696,10 @@ public class Input {
 
     // return True if no error occurred...
     private boolean setLabsData(List<String> table) {
+
+        if (table.size() == 0) {
+            return true; // emptiness errors are checked externally
+        }
 
         for (int i = 0; i < table.size(); i++) { // loop line by line...
             String line = table.get(i); // it is TRIMMED AND NON-BLANK string
@@ -686,6 +726,7 @@ public class Input {
             if (!_mapCourseToIndex.containsKey(hashKey)) { // if this is the first time finding this lab...
                 _mapCourseToIndex.put(hashKey, hashIndex); // record that we have found this lab in file (just in case it shows up again)
                 _courseList.add(newCourse); // add this lab to end of list
+                _labDefined = true; // flag that at least 1 lab was found
             }
 
         }
@@ -945,21 +986,6 @@ public class Input {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-// TODO...
-
-
-
     // QUESTION: ~~~~~~~~~~~~~~~~~~~CAN 813/913 be found normally in the file???? - i'm assuming not
 
     // return True if no error occurred...
@@ -1050,6 +1076,46 @@ public class Input {
         return true;
 
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // use this method after all the setData methods are called to do any other post processing to the data structures (like checking for contradictions that result in NO VALID SOLUTION)
+    // return FALSE if we can identify that we have NO VALID SOLUTION right now
+    private boolean postProcess() {
+
+        return true;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1368,3 +1434,8 @@ public class Input {
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~NOTE: print out specific error messages in order to debug in the future
+
+
+
+
+

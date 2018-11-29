@@ -739,6 +739,10 @@ public class Input {
     // return True if no error occurred...
     private boolean setNotCompatibleData(List<String> table) {
 
+        if (table.size() == 0) { // no error for 0 not comaptibles
+            return true; 
+        }
+
         for (int i = 0; i < table.size(); i++) { // loop line by line
             String line = table.get(i); // is a non-blank trimmed line
             String[] segments = line.split(","); // 1. split line by commas
@@ -785,6 +789,10 @@ public class Input {
 
     // return True if no error occurred...
     private boolean setUnwantedData(List<String> table) {
+
+        if (table.size() == 0) { // no error for 0 unwanteds
+            return true; 
+        }
 
         for (int i = 0; i < table.size(); i++) { // loop line by line
             String line = table.get(i); // is a non-blank trimmed line
@@ -854,6 +862,10 @@ public class Input {
 
     // return True if no error occurred...
     private boolean setPreferencesData(List<String> table) {
+
+        if (table.size() == 0) { // no error for 0 not preferences
+            return true; 
+        }
 
         for (int i = 0; i < table.size(); i++) { // loop line by line
             String line = table.get(i); // is a non-blank trimmed line
@@ -941,6 +953,10 @@ public class Input {
 
     // return True if no error occurred...
     private boolean setPairData(List<String> table) {
+
+        if (table.size() == 0) { // no error for 0 pairs
+            return true; 
+        }
         
         for (int i = 0; i < table.size(); i++) { // loop line by line
             String line = table.get(i); // is a non-blank trimmed line
@@ -990,6 +1006,10 @@ public class Input {
 
     // return True if no error occurred...
     private boolean setPartialAssignmentsData(List<String> table) {
+
+        if (table.size() == 0) { // no error for 0 partassigns
+            return true; 
+        }
 
         for (int i = 0; i < table.size(); i++) { // loop line by line
             String line = table.get(i); // is a non-blank trimmed line

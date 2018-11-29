@@ -8,9 +8,14 @@
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Slot {
-    
+
+    private static Set<String> _validCourseSlots = new HashSet<String>(); // will be initialized by first instance to contains hashKeys for every valid lecture slot as defined by assignment desc.
+    private static Set<String> _validLabSlots = new HashSet<String>(); // will be initialized by first instance to contains hashKeys for every valid lab slot as defined by assignment desc.    
+
     public enum Day {MO, TU, FR};
 
     public int _hashIndex; 
@@ -53,6 +58,7 @@ public class Slot {
 
 
     public Slot(int hashIndex, Day day, String startHourStr, String startMinuteStr) {
+        initValidSlots(); // the first instance will init the static hashsets
         _hashIndex = hashIndex;
         _day = day;
         _startHourStr = startHourStr;
@@ -62,6 +68,77 @@ public class Slot {
         setOutputID();
         setHashKey();
     }
+
+
+
+    private void initValidSlots() { // inits the 2 static hashsets of valid slot hashKeys, only need to do the work for the first time (first instance)
+        if (_validCourseSlots.isEmpty()) { // init valid slots for LEC
+            // MONDAY:
+            _validCourseSlots.add("MO:8:00");
+            _validCourseSlots.add("MO:9:00");
+            _validCourseSlots.add("MO:10:00");
+            _validCourseSlots.add("MO:11:00");
+            _validCourseSlots.add("MO:12:00");
+            _validCourseSlots.add("MO:13:00");
+            _validCourseSlots.add("MO:14:00");
+            _validCourseSlots.add("MO:15:00");
+            _validCourseSlots.add("MO:16:00");
+            _validCourseSlots.add("MO:17:00");
+            _validCourseSlots.add("MO:18:00");
+            _validCourseSlots.add("MO:19:00");
+            _validCourseSlots.add("MO:20:00");
+            // TUESDAY:
+            _validCourseSlots.add("TU:8:00");
+            _validCourseSlots.add("TU:9:30");
+            _validCourseSlots.add("TU:11:00");
+            _validCourseSlots.add("TU:12:30");
+            _validCourseSlots.add("TU:14:00");
+            _validCourseSlots.add("TU:15:30");
+            _validCourseSlots.add("TU:17:00");
+            _validCourseSlots.add("TU:18:30");
+        }
+
+        if (_validLabSlots.isEmpty()) { // init valid slots for LAB/TUT
+            // MONDAY:
+            _validLabSlots.add("MO:8:00");
+            _validLabSlots.add("MO:9:00");
+            _validLabSlots.add("MO:10:00");
+            _validLabSlots.add("MO:11:00");
+            _validLabSlots.add("MO:12:00");
+            _validLabSlots.add("MO:13:00");
+            _validLabSlots.add("MO:14:00");
+            _validLabSlots.add("MO:15:00");
+            _validLabSlots.add("MO:16:00");
+            _validLabSlots.add("MO:17:00");
+            _validLabSlots.add("MO:18:00");
+            _validLabSlots.add("MO:19:00");
+            _validLabSlots.add("MO:20:00");
+            // TUESDAY:
+            _validLabSlots.add("TU:8:00");
+            _validLabSlots.add("TU:9:00");
+            _validLabSlots.add("TU:10:00");
+            _validLabSlots.add("TU:11:00");
+            _validLabSlots.add("TU:12:00");
+            _validLabSlots.add("TU:13:00");
+            _validLabSlots.add("TU:14:00");
+            _validLabSlots.add("TU:15:00");
+            _validLabSlots.add("TU:16:00");
+            _validLabSlots.add("TU:17:00");
+            _validLabSlots.add("TU:18:00");
+            _validLabSlots.add("TU:19:00");
+            _validLabSlots.add("TU:20:00");
+            // FRIDAY:
+            _validLabSlots.add("FR:8:00");
+            _validLabSlots.add("FR:10:00");
+            _validLabSlots.add("FR:12:00");
+            _validLabSlots.add("FR:14:00");
+            _validLabSlots.add("FR:16:00");
+            _validLabSlots.add("FR:18:00");
+        }
+
+    }
+
+
 
     // this assumes that the 2 strings are numeric
     private void setTimeNums() {
@@ -81,11 +158,35 @@ public class Slot {
         _hashKey = _day.name() + ":" + Integer.toString(_startHourNum) + ":" + _startMinuteStr; // e.g. MO, 00:00 becomes MO:0:00, synonymously, MO, 0:00 becomes MO:0:00 (same hash)
     }
 
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~TODO
+    
     // check that all this data is in fact a valid slot per assignment desc.
+    // i think all that needs to be checked is that this hashkey is inside the proper hashset or both?
+    // ONLY call this after construction (which will be enforced by default) and enforce that ALL of the external init happends before calling this fucntion
     public boolean verifySlotValidity() {
-        return true;
+
+        if (_isCourseSlot && !_validCourseSlots.contains(_hashKey)) { // if this courseslot does not correspond to a valid day and start time...
+            return false;
+        }
+        if (_isLabSlot && !_validLabSlots.contains(_hashKey)) { // if this labslot does not correspond to a valid day and start time...
+            return false;
+        }
+        
+        // thus 2 checks are done if its is both slot types
+
+        // get here if VALID in whatever case...
+
+        return true;        
     }
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -93,30 +194,10 @@ public class Slot {
 
     // have function to test if 2 slots are overlapping (their interval (depends on day) overlaps), could be static so it can be called from the algorithm easier, or have it check for an overlap with this slot
 
-    /*
-    public Slot(String hashKey, int hashIndex, Day day, int startHour, int startMinute) {
-        _hashKey = hashKey;
-        _hashIndex = hashIndex;
-        _day = day;
-        _startHour = startHour;
-        _startMinute = startMinute;
-        setEveningFlag();
-    }
-    */
+   
 
-    /*
-    private void setEveningFlag() {
-        _isEveningSlot = _startHour >= 18;
-    }
-    */
+    
 
-    /*
-    // after construction, check that this slot, (which has the proper format for the 4 fields), is one of the VALID slots per the assignment description.
-    public boolean checkSlotValidity() { // ~~~~~~~~~~~~~~~~~~~~~~~~~~~TODO~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-        return true;
-    }
-    */
 
 
 

@@ -34,8 +34,6 @@ public class Course {
     public String _secondarySection; // e.g. 01
 
 
-
-
     // EXTRA DATA
     public boolean _isLecture;
 
@@ -51,22 +49,6 @@ public class Course {
     //public String _sharedHashKey; // e.g. CPSC 433 LEC 01 and CPSC 433 LEC 02 both have shared hashkey "CPSC433" ~~~~~~~~~~~~ use later
 
 
-
-    //public String _identifier; // what we print out at the end (e.g. "CPSC 203 LEC 01") ~~~~~~~~could expand this instead into the 4 (or 6) parts
-
-    //public Slot _currentSlot; // the slot thats currently assigned to this course, maybe split this class into Lecture and Tutorial and then have CourseSlot and LabSlot respectively  
-
-    //public boolean _isLecture; // is the course a lecture? or a tut/lab?
-
-    // could store list of not-compatible partners, but we would have to use twice the memory and we would be doing twice the work, so I think my 2D array + HashMap Idea is better, if we are given a not-compatible line that contains a non-existent course/lab (hash get returns null), then ignore it (or throw error?)
-
-    // similar idea for Unwanted
-
-    // also have a 2d array for preferences : 2 hash index lookups + O(1) array access to get the int/float stored there (preference value)
-
-    // same with pair
-
-    //public Slot _partialAssignment = null; // if !null then _currentSlot MUST match this all the time (except for when currentSlot is null and then we initialize it to this)
 
     // methods
 
@@ -93,6 +75,7 @@ public class Course {
         _isLecture = _primaryType == PrimaryType.LEC && _secondaryType == SecondaryType.NONE;
     }
 
+    // ~~~~~~~~~~~~~~~NOTE: i think labs can also be flagged as evening?
     private void setEveningFlag() {
         _isEveningCourse = _isLecture && _primarySection.charAt(0) == '9';
     }
@@ -133,34 +116,5 @@ public class Course {
             _hashKey = _department + ":" + _number + ":" + primaryTypeID + ":" + _primarySection + ":" + secondaryTypeID + ":" + _secondarySection;
         }
     }
-
-
-    /*
-    public Course(String hashKey, int hashIndex, String department, int number, CourseType type, int primarySection, int secondarySection) {
-        _hashKey = hashKey;
-        _hashIndex = hashIndex;
-        _department = department;
-        _number = number;
-        _type = type;
-        _primarySection = primarySection;
-        _secondarySection = secondarySection;
-        //SetEveningFlag();
-        //Set500Flag();
-    }
-
-    public Course(String hashKey, int hashIndex, String department, int number, CourseType type, int primarySection) {
-        this(hashKey, hashIndex, department, number, type, primarySection, -1);
-    }
-    */
-
-    /*
-    private void SetEveningFlag() {
-        //_isEveningCourse = _type == CourseType.LEC && _primarySection == 9; // or is it >= 9? ~~~~~~~~~~~~~~~~~~~~, or does it mean starting with 9.. like LEC 91? I think it means the latter when looking at his instances, so imma change it, would 09 not be evening then? - i dont think so
-    }
-
-    private void Set500Flag() {
-        _is500Course = _type == CourseType.LEC && (_number >= 500 && _number <= 599);
-    }
-    */
 
 }

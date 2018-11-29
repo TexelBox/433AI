@@ -1111,16 +1111,24 @@ public class Input {
 
 
 
-
-
-
-    // NOTE: ~~~~~~~~~~~~~~~~I need to add inside setCourseSlots, that if we find TU 11:00, then return an error (since no courses can be scheduled to it and the user is contradicting their rules)
-
-
-
     // use this method after all the setData methods are called to do any other post processing to the data structures (like checking for contradictions that result in NO VALID SOLUTION)
     // return FALSE if we can identify that we have NO VALID SOLUTION right now
     private boolean postProcessData() {
+
+        //5. if _mapSlotToIndex contains hashkey for TU 11:00, then overwrite coursemax=coursemin=0
+        // make sure to test this is the proper hashkey...
+        String tu11HashKey = "TU:11:00"
+        if (_mapSlotToIndex.containsKey(tu11HashKey)) {
+            int tu11HashIndex = _mapSlotToIndex.get(tu11HashKey);
+            Slot tu11Slot = _slotList.get(tu11HashIndex); // retrieve reference to the slot
+            tu11Slot._coursemax = 0;
+            tu11Slot._coursemin = 0;
+        }
+
+
+
+
+
 
         /*
         STUFF TO DO HERE...
@@ -1139,6 +1147,7 @@ public class Input {
         - I know for sure that CPSC 433 LEC 01 and CPSC 433 LEC 02 are not (not-compatible) since there is the soft constraint that if they share same slot/overlap, then we add the pen_section penalty.
 
         4. for all the partassigns, make sure that that course and slot are also not 'not-compatible', if so, return false
+
 
 
 
@@ -1472,6 +1481,8 @@ public class Input {
         else {
             newSlot._isLabSlot = true;
         }
+
+        // NOTE: verification must only occur after _isCourseSlot or _isLabSlot are set, so don't change this order
 
         if (toVerify) {
             if (!newSlot.verifySlotValidity()) {

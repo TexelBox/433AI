@@ -30,3 +30,4 @@ Herman:
 
 **Next Meeting:**
 - Tuesday, December 4, 2018 @ 3:30 pm
+- We will do all the final testing then.

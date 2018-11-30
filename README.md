@@ -1,6 +1,6 @@
 # 433AI
 
-*To-Do List:*
+**To-Do List:**
 1. Refine the parser.
 2. Eval function needs to be implemented inside the Slot class. (For the course min, lab min soft constraints, there are two options: consider it at the end when you have a full solution, or consider it little bit earlier based on lecture count + number of courses that have not been assigned yet < course min).
 3. f_leaf needs to be implemented inside the AndTree class (choose the leaf with the least dollar signs; or if there are ties, choose the leftmost leaf).
@@ -12,7 +12,7 @@
 9. Make test files and run them.
 10. ASK QUESTIONS TO JORG!!!
 
-*Distribution of Work:*
+**Distribution of Work:**
 *!!! FINISH YOUR PARTS BEFORE TUESDAY AT THE LATEST !!! *
 Aaron:
 - #1, #2, #10
@@ -26,5 +26,5 @@ Cynthia:
 Herman:
 - #9
 
-*Next Meeting:*
+**Next Meeting:**
 - Tuesday, December 4, 2018 @ 3:30 pm

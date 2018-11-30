@@ -13,7 +13,9 @@
 10. ASK QUESTIONS TO JORG!!!
 
 **Distribution of Work:**
-*!!! FINISH YOUR PARTS BEFORE TUESDAY AT THE LATEST !!! *
+
+*!!! FINISH YOUR PARTS BEFORE TUESDAY AT THE LATEST !!!*
+
 Aaron:
 - #1, #2, #10
 

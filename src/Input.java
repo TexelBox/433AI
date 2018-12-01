@@ -97,7 +97,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
-
+import javafx.util.Pair;
 
 
 public class Input {
@@ -156,6 +156,7 @@ public class Input {
     // e.g. CPSC 433 TUT 01, CPSC 433 LEC 01 TUT 02 both have sharedHashKey "CPSC:433" and thus .get("CPSC:433") will return a list of size 2. 2 indices i,j each for these 2 course objects
     private Map<String, ArrayList<Integer>> _mapClassIDToListOfLabsTuts = new HashMap<>();
 
+    private List<Pair<Integer,Integer>> _builtInNotCompats = new ArrayList<Pair<Integer,Integer>>(); // post process will use this to update not-compatible array for lecs and labs of same sharedHashKey
 
     // IDEAS:
 
@@ -706,14 +707,14 @@ public class Input {
     }
 
 
-    // I wonder if you would also have to check that if you get a lab for CPSC 433, that at least 1 lec for CPSC 433 was defined (yes im doing this)
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~NOTE: Do we need to check for the lecture section part actually existing???? (for now, i'm not doing this), yes it should be an error
-    // working on this rright now, 
     
+    // TODO~~~~~~~~~~~~~~~~~~~~~~~~~what if we get CPSC 433 LEC 01 TUT 01 and CPSC 433 TUT 01 / CPSC 433 LEC 02 TUT 01 (all result in errors)
 
-
-
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~what if we get CPSC 433 LEC 01 TUT 01 and CPSC 433 TUT 01 / CPSC 433 LEC 02 TUT 01 (all result in errors)
+    // UPDATES: now if we get CPSC 433 TUT 01, it returns an error if file didnt define any LEC for CPSC 433
+    // if no error occurs, then we mark this lab not-compat with every lec section defined.
+    // now if we get CPSC 433 LEC 01 TUT 02, it returns an error if file didnt define CPSC 433 LEC 01
+    // if it was defined, then we mark this lab and its corresponding lec section as not-compat.
+    // NOTE: these not-compats will be formally set in the 2D array in postProcess()
 
     // return True if no error occurred...
     private boolean setLabsData(List<String> table) {
@@ -759,6 +760,63 @@ public class Input {
                 else { // if the arraylist was already created by a previous LAB/TUT section of e.g. CPSC433, then we just add to the list
                     _mapClassIDToListOfLabsTuts.get(sharedHashKey).add(hashIndex); // add this section to list
                 }
+
+
+                // now we have a lab, but we need to check for LECs of same sharedHashKey
+                // case 1) if we have CPSC 433 TUT 01, we need at least 1 LEC of CPSC 433 in file
+                // could then also set not-compatibility here
+                // case 2) if we have CPSC 433 LEC 02 TUT 01, we need to have CPSC 433 LEC 02 in file
+                // could also set not-compat here
+
+                // NOTE: can change it so we have if (4seg) then check if null, if not set NC with whole list, else if (6seg) check if specific lec is there and set NC 
+
+                ArrayList<Integer> sharedLecsList = _mapClassIDToListOfLecs.get(sharedHashKey);
+
+                if (newCourse._secondaryType == Course.SecondaryType.NONE) { // if 4 segments...
+                    if (sharedLecsList == null) { // if no LECS were defined with this shared key...
+                        System.out.println("ERROR: lab/tutorial defined without any lecture section for their shared class identifier, " + newCourse._outputID);
+                        return false;
+                    }
+                    else { // so we have found a list which we know was initialized to size 1 when it was first put in map. And it could have grown with the addition of more LECS
+                        // set this newCourse not-compatible with every LEC in this list
+                        for(int j = 0; j < sharedLecsList.size(); j++) {
+                            int nextCourseIndex = sharedLecsList.get(j); // get index of next LEC in list
+                            _builtInNotCompats.add(new Pair<Integer,Integer>(hashIndex, nextCourseIndex));
+                            _builtInNotCompats.add(new Pair<Integer,Integer>(nextCourseIndex, hashIndex)); // for NC symmetry
+                            // ~~~~~~~~~~~~~ then in postprocess, we can iterate through this list and set true in boolean area for each pair.
+                        }
+                    }
+                }
+                else { // if 6 segments...
+                    // now if this newCourse (lab) is of the form e.g. CPSC 433 LEC 02 TUT 01 (6 segments), we must find CPSC 433 LEC 02
+                    if (sharedLecsList == null) { // if no LECS were defined with this shared key...
+                        System.out.println("ERROR: lab/tutorial defined without its corresponding lecture section, " + newCourse._outputID);
+                        return false;
+                    }
+                    else {
+                        // search through list to try to find corresponding lec and the push not-compatible pairs
+                        boolean candidateFound = false;
+                        for(int j = 0; j < sharedLecsList.size(); j++) {
+                            int nextCourseIndex = sharedLecsList.get(j); // get index of next LEC in list
+                            Course candidate = _courseList[nextCourseIndex]; // get the instance
+
+                            if (candidate._primarySection.equals(newCourse._primarySection)) { // e.g. if 02 == 02
+                                // we found the corresponding lecture section...
+                                candidateFound = true; // update flag to prevent error
+                                _builtInNotCompats.add(new Pair<Integer,Integer>(hashIndex, nextCourseIndex));
+                                _builtInNotCompats.add(new Pair<Integer,Integer>(nextCourseIndex, hashIndex)); // for NC symmetry
+                                // ~~~~~~~~~~~~~ then in postprocess, we can iterate through this list and set true in boolean area for each pair.
+                            }
+
+                        }
+
+                        if (!candidateFound) {
+                            System.out.println("ERROR: lab/tutorial defined without its corresponding lecture section, " + newCourse._outputID);
+                            return false;
+                        }
+                    }
+                }
+
             }
             else { // if this is a duplicate lab/lab or tut/tut or lab/tut or tut/lab definition...
                 int exHashIndex = _mapCourseToIndex.get(hashKey); // get the existing index
@@ -1165,6 +1223,7 @@ public class Input {
     // return FALSE if we can identify that we have NO VALID SOLUTION right now
     private boolean postProcessData() {
 
+        // ~~~~~~~~~~~~NOTE: maybe just change this so we overwrite coursemax only
         //5. if _mapSlotToIndex contains hashkey for TU 11:00, then overwrite coursemax=coursemin=0
         // make sure to test this is the proper hashkey...
         String tu11HashKey = "TU:11:00"
@@ -1173,6 +1232,13 @@ public class Input {
             Slot tu11Slot = _slotList.get(tu11HashIndex); // retrieve reference to the slot
             tu11Slot._coursemax = 0;
             tu11Slot._coursemin = 0;
+        }
+
+        //3. make sure courses and labs of same class are properly init as not-compatible according to specs (ex. have the sharedHashMap and use the sharedHaskkey to set this list right here)
+        for (Pair<Integer,Integer> pair : _builtInNotCompats) {
+            int indexL = pair.getKey();
+            int indexR = pair.getValue();
+            _notCompatibles[indexL][indexR] = true;
         }
 
 
@@ -1188,13 +1254,12 @@ public class Input {
             -inside Slot.java create a function to check if 'this' slot overlaps with another slot passed as a param. (factor in stuff like type, day, time)
             -iterate through _slotList and check for overlaps with all entry to the right of it (shifted nested for loops) and update this 2D array.
             -NOTE: make sure that a slot doesn't overlap with itself (technically it does, but keep it at default FALSE in order to avoid major errors/redundancy)  
+            - OR a more efficient way would be to generate the list of slot overlaps fo every slot here, thus you dont linear search everytime.
+
 
         2.  along the diagonal of _notcompatibles, check for a true value, if there is one return false (means the input file had a line saying a course is not-compat with itself) - maybe change to parse error?
         
-        3. make sure courses and labs of same class are properly init as not-compatible according to specs (ex. have the sharedHashMap and use the sharedHaskkey to set this list right here)
-        - I think it just means that CPSC 433 LEC 01 and CPSC 433 TUT 01 can be in same slot/overlap but CPSC 433 LEC 01 and CPSC 433 LEC 01 TUT 01 can't be!
-        - Also what if the file has both CPSC 433 TUT 01 and CPSC 433 LEC 01 TUT 01?
-        - I know for sure that CPSC 433 LEC 01 and CPSC 433 LEC 02 are not (not-compatible) since there is the soft constraint that if they share same slot/overlap, then we add the pen_section penalty.
+        
 
         4. for all the partassigns, make sure that that course and slot are also not 'not-compatible', if so, return false
 

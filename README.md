@@ -31,3 +31,6 @@ Herman:
 **Next Meeting:**
 - Tuesday, December 4, 2018 @ 3:30 pm
 - We will do all the final testing then.
+
+**DEMO PRESENTATION**
+- Wednesday, December 5, 2018 @ 14:00 (2:00 pm)

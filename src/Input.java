@@ -666,7 +666,8 @@ public class Input {
 
             // get here if we have a valid lecture
 
-            // ~~~~~~~~~~~~~~~~NOTE: currently duplicates are simply ignored
+            // NOTE: currently lecture duplicates are simply ignored
+            // i'm gonna change it so that it prints out a warning for duplicate lectures, but it will ignore the duplicate and continue
 
             String hashKey = newCourse._hashKey;
             int hashIndex = newCourse._hashIndex;
@@ -676,6 +677,9 @@ public class Input {
                 _courseList.add(newCourse); // add this lecture to end of list
                 _courseDefined = true; // flag that at least 1 course was found
             }
+            else { // if this is a duplicate lecture definition...
+                System.out.println("WARNING: duplicate course listed, " + newCourse._outputID); // print warning and continue
+            }
 
         }
 
@@ -684,9 +688,8 @@ public class Input {
 
 
 
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~NOTE: Do we need to check for the lecture section part actually existing???? (for now, i'm not doing this)
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~what if we get CPSC 433 LEC 01 TUT 01 and CPSC 433 TUT 01 
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~TO ADD: not-compatible of this lab with same course Lec's and other labs, can use new hashmap + sharedKeys
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~NOTE: Do we need to check for the lecture section part actually existing???? (for now, i'm not doing this), yes it should be an error
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~what if we get CPSC 433 LEC 01 TUT 01 and CPSC 433 TUT 01 / CPSC 433 LEC 02 TUT 01 (all result in errors)
 
     // return True if no error occurred...
     private boolean setLabsData(List<String> table) {
@@ -711,8 +714,9 @@ public class Input {
 
             // get here if we have a valid lab
 
-            // ~~~~~~~~~~~~~~~~NOTE: currently duplicates are simply ignored
-            // ~~~~~~~~~~~~~~~~NOTE: CPSC 433 TUT 01 == CPSC 433 LAB 01 (currently synonymous)
+            // I am changing it so that a duplicate like: CPSC 433 LAB 01 and CPSC 433 LAB 01 will print a warning but will get ignored
+            // and a duplicate of CPSC 433 LAB 01 and CPSC 433 TUT 01 will return an error 
+            // NOTE: CPSC 433 TUT 01 == CPSC 433 LAB 01 (synonymous)
 
             String hashKey = newCourse._hashKey;
             int hashIndex = newCourse._hashIndex;
@@ -721,6 +725,31 @@ public class Input {
                 _mapCourseToIndex.put(hashKey, hashIndex); // record that we have found this lab in file (just in case it shows up again)
                 _courseList.add(newCourse); // add this lab to end of list
                 _labDefined = true; // flag that at least 1 lab was found
+            }
+            else { // if this is a duplicate lab/lab or tut/tut or lab/tut or tut/lab definition...
+                int exHashIndex = _mapCourseToIndex.get(hashKey); // get the existing index
+                Course oldLab = _courseList[exHashIndex]; // retrieve reference to the lab we already found sharing this hashkey
+
+                // NOTE: the only way oldLab and newCourse would have matching hashkeys is if they have the same number of segments
+                if (newCourse._secondaryType == Course.SecondaryType.NONE) { // 4 segments
+                    if (newCourse._primaryType == oldLab._primaryType) { // case 1: LAB/LAB or TUT/TUT (warning only)
+                        System.out.println("WARNING: duplicate lab/tutorial listed, " + newCourse._outputID); // print warning and continue
+                    }
+                    else { // case 2: LAB/TUT or TUT/LAB (error)
+                        System.out.println("ERROR: lab/tutorial defined with both LAB and TUT, " + oldLab._outputID + " & " newCourse._outputID); // print error and return
+                        return false;
+                    }
+                }
+                else { // 6 segments
+                    if (newCourse._secondaryType == oldLab._secondaryType) { // case 1: LAB/LAB or TUT/TUT (warning only)
+                        System.out.println("WARNING: duplicate lab/tutorial listed, " + newCourse._outputID); // print warning and continue
+                    }
+                    else { // case 2: LAB/TUT or TUT/LAB (error)
+                        System.out.println("ERROR: lab/tutorial defined with both LAB and TUT, " + oldLab._outputID + " & " newCourse._outputID); // print error and return
+                        return false;
+                    }
+                }
+
             }
 
         }

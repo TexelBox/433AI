@@ -109,7 +109,7 @@ public class Course {
             if (_primaryType == PrimaryType.LEC) {
                 primaryTypeID = "LEC";
             }
-            else { // if LAB or TUT (synonyms)
+            else { // if LAB or TUT (synonyms) ~~~~~~~~~~~~~~~~~~~shoulnt this not be here and instead be an error? or it never happens due to outside checking
                 primaryTypeID = "LAB/TUT";
             }
             String secondaryTypeID = "LAB/TUT";

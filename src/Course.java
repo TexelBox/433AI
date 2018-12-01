@@ -4,8 +4,6 @@
 // A 'Course' can be either a LECTURE or a LAB/TUTORIAL (treated synonymously)
 public class Course {
 
-    //public enum CourseType {LEC, LAB, TUT, LECLAB, LECTUT};
-
     public enum PrimaryType {LEC, LAB, TUT};
     public enum SecondaryType {NONE, LAB, TUT};
 
@@ -15,19 +13,11 @@ public class Course {
 
     public String _department; // e.g. CPSC
 
-    //public int _number; // e.g. 433
-
     public String _number; // e.g. 433
-
-    //public CourseType _type; // e.g. LEC X TUT Y
 
     public PrimaryType _primaryType;
 
-    //public int _primarySection; // e.g. X = 1 (for LEC 01)
-
     public String _primarySection; // e.g. 01
-
-    //public int _secondarySection; // e.g. Y = 5 (for TUT 05), only overwrite this is _type is LECLAB or LECTUT
 
     public SecondaryType _secondaryType;
 
@@ -45,8 +35,7 @@ public class Course {
 
     public String _hashKey; // for lookup of its index in hashmap, init this when we construct this object and push its key/value pair into hashmap
 
-
-    //public String _sharedHashKey; // e.g. CPSC 433 LEC 01 and CPSC 433 LEC 02 both have shared hashkey "CPSC433" ~~~~~~~~~~~~ use later
+    public String _sharedHashKey; // e.g. CPSC 433 LEC 01 and CPSC 433 LEC 02 both have shared hashkey "CPSC:433"
 
 
 
@@ -75,7 +64,6 @@ public class Course {
         _isLecture = _primaryType == PrimaryType.LEC && _secondaryType == SecondaryType.NONE;
     }
 
-    // ~~~~~~~~~~~~~~~NOTE: i think labs can also be flagged as evening?
     private void setEveningFlag() {
         _isEveningCourse = _isLecture && _primarySection.charAt(0) == '9';
     }
@@ -104,17 +92,15 @@ public class Course {
             }
             _hashKey = _department + ":" + _number + ":" + primaryTypeID + ":" + _primarySection;
         }
-        else { // 6 segments
-            String primaryTypeID;
-            if (_primaryType == PrimaryType.LEC) {
-                primaryTypeID = "LEC";
-            }
-            else { // if LAB or TUT (synonyms) ~~~~~~~~~~~~~~~~~~~shoulnt this not be here and instead be an error? or it never happens due to outside checking
-                primaryTypeID = "LAB/TUT";
-            }
+        else { // 6 segments (only cases that are allowed before you get here if LECLAB and LECTUT)
+            String primaryTypeID = "LEC";
             String secondaryTypeID = "LAB/TUT";
             _hashKey = _department + ":" + _number + ":" + primaryTypeID + ":" + _primarySection + ":" + secondaryTypeID + ":" + _secondarySection;
         }
+    }
+
+    private void setSharedHashKey() {
+        _sharedHashKey = _department + ":" + _number; // e.g. "CPSC:433"
     }
 
 }

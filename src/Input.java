@@ -148,6 +148,15 @@ public class Input {
     // represent $ as NULL
     public Slot[] _partialAssignments; // [i] = sl, means that course i must assign to slot sl, NULL means no assignment ($)
 
+
+
+    // e.g. CPSC 433 LEC 01, CPSC 433 LEC 02 both have sharedHashKey "CPSC:433" and thus .get("CPSC:433") will return a list of size 2. 2 indices i,j each for these 2 course objects
+    private Map<String, ArrayList<Integer>> _mapClassIDToListOfLecs = new HashMap<>(); 
+
+    // e.g. CPSC 433 TUT 01, CPSC 433 LEC 01 TUT 02 both have sharedHashKey "CPSC:433" and thus .get("CPSC:433") will return a list of size 2. 2 indices i,j each for these 2 course objects
+    private Map<String, ArrayList<Integer>> _mapClassIDToListOfLabsTuts = new HashMap<>();
+
+
     // IDEAS:
 
     /*
@@ -676,6 +685,16 @@ public class Input {
                 _mapCourseToIndex.put(hashKey, hashIndex); // record that we have found this lecture in file (just in case it shows up again)
                 _courseList.add(newCourse); // add this lecture to end of list
                 _courseDefined = true; // flag that at least 1 course was found
+
+                String sharedHashKey = newCourse._sharedHashKey; // e.g. "CPSC:433"
+                if (!_mapClassIDToListOfLecs.containsKey(sharedHashKey)) { // e.g. is this is the first time finding a lec for CPSC 433...
+                    ArrayList<Integer> newList = new ArrayList<>(); // creating the list for the first time
+                    newList.add(hashIndex); // keep track of the index of this lecture section for CPSC 433
+                    _mapClassIDToListOfLecs.put(sharedHashKey, newList);
+                }
+                else { // if the arraylist was already created by a previous LEC section of e.g. CPSC433, then we just add to the list
+                    _mapClassIDToListOfLecs.get(sharedHashKey).add(hashIndex); // add this section to list
+                }
             }
             else { // if this is a duplicate lecture definition...
                 System.out.println("WARNING: duplicate course listed, " + newCourse._outputID); // print warning and continue
@@ -687,8 +706,13 @@ public class Input {
     }
 
 
-
+    // I wonder if you would also have to check that if you get a lab for CPSC 433, that at least 1 lec for CPSC 433 was defined (yes im doing this)
     // ~~~~~~~~~~~~~~~~~~~~~~~~~NOTE: Do we need to check for the lecture section part actually existing???? (for now, i'm not doing this), yes it should be an error
+    // working on this rright now, 
+    
+
+
+
     // ~~~~~~~~~~~~~~~~~~~~~~~~~what if we get CPSC 433 LEC 01 TUT 01 and CPSC 433 TUT 01 / CPSC 433 LEC 02 TUT 01 (all result in errors)
 
     // return True if no error occurred...
@@ -725,6 +749,16 @@ public class Input {
                 _mapCourseToIndex.put(hashKey, hashIndex); // record that we have found this lab in file (just in case it shows up again)
                 _courseList.add(newCourse); // add this lab to end of list
                 _labDefined = true; // flag that at least 1 lab was found
+
+                String sharedHashKey = newCourse._sharedHashKey; // e.g. "CPSC:433"
+                if (!_mapClassIDToListOfLabsTuts.containsKey(sharedHashKey)) { // e.g. is this is the first time finding a lab/tut for CPSC 433...
+                    ArrayList<Integer> newList = new ArrayList<>(); // creating the list for the first time
+                    newList.add(hashIndex); // keep track of the index of this lab/tut section for CPSC 433
+                    _mapClassIDToListOfLabsTuts.put(sharedHashKey, newList);
+                }
+                else { // if the arraylist was already created by a previous LAB/TUT section of e.g. CPSC433, then we just add to the list
+                    _mapClassIDToListOfLabsTuts.get(sharedHashKey).add(hashIndex); // add this section to list
+                }
             }
             else { // if this is a duplicate lab/lab or tut/tut or lab/tut or tut/lab definition...
                 int exHashIndex = _mapCourseToIndex.get(hashKey); // get the existing index

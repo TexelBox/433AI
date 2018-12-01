@@ -486,16 +486,32 @@ public class Input {
     private boolean setNameData(List<String> table) {
 
         if (table.size() == 0) {
-            System.out.println("Error: missing name"); 
+            System.out.println("ERROR: missing name"); 
             return false;
         }
         else if (table.size() > 1) {
-            System.out.println("Error: invalid extra line under Name:");
+            System.out.println("ERROR: invalid extra line under Name:");
             return false;
         }
         else { // if 1 line
-            // ~~~~~~~~~~~~~~~~~~NOTE: should probably check that this line is not a keyword, if so then return false
-            _name = table.get(0);
+            // check that this line is not a keyword, if so then return false
+            theName = table.get(0);
+            switch(theName) {
+                case "Name:":
+                case "Course slots:":
+                case "Lab slots:":
+                case "Courses:":
+                case "Labs:":
+                case "Not compatible:":
+                case "Unwanted:":
+                case "Preferences:":
+                case "Pair:":
+                case "Partial assignments:":
+                    System.out.println("ERROR: name cannot be a keyword, " + theName);
+                    return false;
+                default:
+                    _name = theName;
+            }
         }
         return true;
     }

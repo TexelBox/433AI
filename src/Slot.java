@@ -58,6 +58,12 @@ public class Slot {
 
     //public list of overlapping slots (need to set symmetrically)
 
+    public Set<Integer> _overlaps = new HashSet<Integer>(); // the set of slot indices that this slot overlaps (not including itself)
+
+
+
+
+
     // algorithm stuff...
     public List<Integer> _courseIndices = new ArrayList<Integer>(); // current indices of courses assigned to this slot
     public int _lectureCount = 0; // number of lectures in _courseIndices 
@@ -232,25 +238,55 @@ public class Slot {
 
 
 
+    // this static function will be used by the post-process() of the parser ONLY to check if 2 slots overlap
+    // then the parser will update the overlap sets for each slot symmetrically if they do overlap
+    // return True if overlap
+    public static boolean checkForOverlap(Slot slot1, Slot slot2) {
+
+        // check for time non-overlap....
+        if (slot1._startTimeInMinutes >= slot2._endTimeInMinutes) {
+            return false;
+        }
+        if (slot1._endTimeInMinutes <= slot2._startTimeInMinutes) {
+            return false;
+        }
+
+        // get here and theres an overlap for time, but what about the day?
+
+        // check the day
+        // cases of overlaps...
+        // 1. MO LEC w/ MO LEC (self-overlap)
+        // 2. MO LAB w/ MO LAB (self-overlap) ~~~~~~combine these 4 into 1
+        // 3. MO LEC w/ MO LAB 
+        // 4. MO LAB w/ MO LEC
+
+        // 5. MO LEC w/ FR LAB
+
+        // 6. TU LEC w/ TU LEC (self-overlap) ~~~~~~~~~combine these 4 into 1
+        // 7. TU LAB w/ TU LAB (self-overlap)
+        // 8. TU LEC w/ TU LAB 
+        // 9. TU LAB w/ TU LEC
+
+        // 10. FR LAB w/ FR LAB (self-overlap)
+
+        if (slot1._day == slot2._day) { // if they are on the same day (and time overlaps), theres an overlap
+            return true;
+        }
+        else if (slot1._isCourseSlot && slot1._day == Day.MO && slot2._day == Day.FR) {
+            return true;
+        }
+        else if (slot2._isCourseSlot && slot2._day == Day.MO && slot1._day == Day.FR) {
+            return true;
+        }
+        else {
+            return false; // days that never overlaps
+        }
+
+    }
 
 
-
-
-    // have function to test if this is a valid slot which the constructor can call (or when we change data?)
-
-    // have function to test if 2 slots are overlapping (their interval (depends on day) overlaps), could be static so it can be called from the algorithm easier, or have it check for an overlap with this slot
-
-   
 
     
-
-
-
-
-
-
-
-
 
     // return True if no hard constraints are violated
     // this is the slot that has just been changed

@@ -595,7 +595,7 @@ public class Input {
     }
 
 
-    
+
     // pretty close to setCourseSlotsData()
     // return True if no error occurred...
     private boolean setLabSlotsData(List<String> table) {
@@ -1480,14 +1480,30 @@ public class Input {
             _notCompatibles[indexL][indexR] = true;
         }
 
+        // initialize the sets of overlapping slots for each slot
+        // check over each pair of slots in our slotslist and check if they overlap
+        // if they do, then add each other to the other's overlaps set
+        // NOTE: this won't inlcude self-overlaps which are obvious
+
+        for (int i = 0; i < _slotList.size() - 1; i++) {
+            for (int j = i+1; j < _slotList.size(); j++ ) {
+                Slot slot1 = _slotList.get(i);
+                Slot slot2 = _slotList.get(j);
+                if (Slot.checkForOverlap(slot1, slot2)) { // if these 2 slots overlap...
+                    // add slot2 index to slot1's set
+                    slot1._overlaps.add(j);
+                    // add slot1 index to slot2's set
+                    slot2._overlaps.add(i);
+                }
+            }
+        }
 
 
-        // could split the slotlist into 3 lists: COURSESLOTS, LABSLOTS, BOTHSLOTS
-        // or just add a dual-slot into both COURSESLOTS and LABSLOTS.
-        // then the algortihm would be more efficient since if the $ was for a courseslot, then we would only expand a leaf into courseslot permutations.
-        // but that is an optimization thing that is just saving the steps of checking hard constrait max=0
-        // this would cut the tree in half though...
-        // or just re parse into 2 lists and then the end time can be easily set and then i can have a function here that sets the overlaps
+
+
+
+
+        // or just re parse into 2 lists and then the end time can be easily set
 
 
         /*

@@ -777,7 +777,7 @@ public class Input {
                     ArrayList<Integer> sharedLabsList = _mapClassIDToListOfLabsTuts.get(sharedHashKey); // get the list of tuts/labs sharing this class
                     for(int j = 0; j < sharedLabsList.size(); j++) { // loop through all shared labs
                         int otherLabIndex = sharedLabsList.get(j); // get index of next lab to check
-                        Course otherLab = _courseList[otherLabIndex]; // retrieve reference to the instance
+                        Course otherLab = _courseList.get(otherLabIndex); // retrieve reference to the instance
 
                         // now compare the tutorial section strings
                         String newCourseLabSection = newCourse.SecondaryType == Course.SecondaryType.NONE ? newCourse._primarySection : newCourse._secondarySection;
@@ -831,7 +831,7 @@ public class Input {
                         boolean candidateFound = false;
                         for(int j = 0; j < sharedLecsList.size(); j++) {
                             int nextCourseIndex = sharedLecsList.get(j); // get index of next LEC in list
-                            Course candidate = _courseList[nextCourseIndex]; // get the instance
+                            Course candidate = _courseList.get(nextCourseIndex); // get the instance
 
                             if (candidate._primarySection.equals(newCourse._primarySection)) { // e.g. if 02 == 02
                                 // we found the corresponding lecture section...
@@ -860,7 +860,7 @@ public class Input {
             }
             else { // if this is a duplicate lab/lab or tut/tut or lab/tut or tut/lab definition...
                 int exHashIndex = _mapCourseToIndex.get(hashKey); // get the existing index
-                Course oldLab = _courseList[exHashIndex]; // retrieve reference to the lab we already found sharing this hashkey
+                Course oldLab = _courseList.get(exHashIndex); // retrieve reference to the lab we already found sharing this hashkey
 
                 // NOTE: the only way oldLab and newCourse would have matching hashkeys is if they have the same number of segments
                 if (newCourse._secondaryType == Course.SecondaryType.NONE) { // 4 segments
@@ -868,7 +868,7 @@ public class Input {
                         System.out.println("WARNING: duplicate lab/tutorial listed, " + newCourse._outputID); // print warning and continue
                     }
                     else { // case 2: LAB/TUT or TUT/LAB (error)
-                        System.out.println("ERROR: lab/tutorial defined with both LAB and TUT, " + oldLab._outputID + " & " newCourse._outputID); // print error and return
+                        System.out.println("ERROR: lab/tutorial defined with both LAB and TUT, " + oldLab._outputID + " & " + newCourse._outputID); // print error and return
                         return false;
                     }
                 }
@@ -877,7 +877,7 @@ public class Input {
                         System.out.println("WARNING: duplicate lab/tutorial listed, " + newCourse._outputID); // print warning and continue
                     }
                     else { // case 2: LAB/TUT or TUT/LAB (error)
-                        System.out.println("ERROR: lab/tutorial defined with both LAB and TUT, " + oldLab._outputID + " & " newCourse._outputID); // print error and return
+                        System.out.println("ERROR: lab/tutorial defined with both LAB and TUT, " + oldLab._outputID + " & " + newCourse._outputID); // print error and return
                         return false;
                     }
                 }
@@ -925,7 +925,7 @@ public class Input {
             // check for the error if both the Left and Right are equal (rare case of self-incompatibility which is nonsense)
             // e.g. CPSC 433 LEC 01, CPSC 433 LEC 01 or CPSC 433 TUT 01, CPSC 433 LAB 01 (etc.)
             if (leftHashKey.equals(rightHashKey)) {
-                System.out.println("ERROR: self-incompatibility defined in not compatible table, " + leftCourse._outputID " & " + rightCourse._outputID);
+                System.out.println("ERROR: self-incompatibility defined in not compatible table, " + leftCourse._outputID + " & " + rightCourse._outputID);
                 return false;
             }
 
@@ -1273,7 +1273,7 @@ public class Input {
         // I think it should stay as overwriting both, because the hard constraint is that we require EXCATLY 0 (min=max=0) courses in this slot
         // 5. if _mapSlotToIndex contains hashkey for TU 11:00, then overwrite coursemax=coursemin=0
         // make sure to test this is the proper hashkey...
-        String tu11HashKey = "TU:11:00"
+        String tu11HashKey = "TU:11:00";
         if (_mapSlotToIndex.containsKey(tu11HashKey)) {
             int tu11HashIndex = _mapSlotToIndex.get(tu11HashKey);
             Slot tu11Slot = _slotList.get(tu11HashIndex); // retrieve reference to the slot

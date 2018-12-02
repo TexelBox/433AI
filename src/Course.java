@@ -54,6 +54,7 @@ public class Course {
         set500Flag();
         setOutputID();
         setHashKey();
+        setSharedHashKey();
     }
 
     public Course(int hashIndex, String department, String number, PrimaryType primaryType, String primarySection) {

@@ -64,7 +64,7 @@ public class Course {
         _isLecture = _primaryType == PrimaryType.LEC && _secondaryType == SecondaryType.NONE;
     }
 
-    private void setEveningFlag() {
+    private void setEveningFlag() { // only applies to lectures with first character as a 9
         _isEveningCourse = _isLecture && _primarySection.charAt(0) == '9';
     }
 

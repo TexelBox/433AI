@@ -916,13 +916,23 @@ public class Input {
 
             // NOTE: don't use the new hashIndices, they will be wrong
             // now we can extract the hashKeys and lookup if they were actually defined before...
-            // RULES: right now, if we find a non-defined course, just ignore this line ~~~~~~~~~~~~~~maybe change to print an error in future?
+            // RULES: right now, if we find a non-defined course, print warning and ignore this line.
             // ALSO, if a duplicate line is given, no special treatment is needed since it will overwrite TRUE with TRUE (no change)
 
             String leftHashKey = leftCourse._hashKey;
             String rightHashKey = rightCourse._hashKey;
 
+            // check for the error if both the Left and Right are equal (rare case of self-incompatibility which is nonsense)
+            // e.g. CPSC 433 LEC 01, CPSC 433 LEC 01 or CPSC 433 TUT 01, CPSC 433 LAB 01 (etc.)
+            if (leftHashKey.equals(rightHashKey)) {
+                System.out.println("ERROR: self-incompatibility defined in not compatible table, " + leftCourse._outputID " & " + rightCourse._outputID);
+                return false;
+            }
+
+            // get here if were working with 2 different classes...
+
             if (!_mapCourseToIndex.containsKey(leftHashKey) || !_mapCourseToIndex.containsKey(rightHashKey)) { // if one of these 2 courses is undefined...
+                System.out.println("WARNING: line in not compatible table has an undefined class, " + leftCourse._outputID + ", " + rightCourse._outputID);
                 continue; // ignore this line
             }
 
@@ -1157,7 +1167,7 @@ public class Input {
 
 
 
-    // QUESTION: ~~~~~~~~~~~~~~~~~~~CAN 813/913 be found normally in the file???? - i'm assuming not
+    // QUESTION: ~~~~~~~~~~~~~~~~~~~CAN 813/913 be found normally in the file???? - i'm assuming not (no they can't)
 
     // return True if no error occurred...
     private boolean setPartialAssignmentsData(List<String> table) {
@@ -1256,16 +1266,12 @@ public class Input {
 
 
 
-
-
-
     // use this method after all the setData methods are called to do any other post processing to the data structures (like checking for contradictions that result in NO VALID SOLUTION)
     // return FALSE if we can identify that we have NO VALID SOLUTION right now
     private boolean postProcessData() {
 
-        // ~~~~~~~~~~~~NOTE: maybe just change this so we overwrite coursemax only
         // I think it should stay as overwriting both, because the hard constraint is that we require EXCATLY 0 (min=max=0) courses in this slot
-        //5. if _mapSlotToIndex contains hashkey for TU 11:00, then overwrite coursemax=coursemin=0
+        // 5. if _mapSlotToIndex contains hashkey for TU 11:00, then overwrite coursemax=coursemin=0
         // make sure to test this is the proper hashkey...
         String tu11HashKey = "TU:11:00"
         if (_mapSlotToIndex.containsKey(tu11HashKey)) {
@@ -1275,7 +1281,7 @@ public class Input {
             tu11Slot._coursemin = 0;
         }
 
-        //3. make sure courses and labs of same class are properly init as not-compatible according to specs (ex. have the sharedHashMap and use the sharedHaskkey to set this list right here)
+        // 3. make sure courses and labs of same class are properly init as not-compatible according to specs (ex. have the sharedHashMap and use the sharedHaskkey to set this list right here)
         for (Pair<Integer,Integer> pair : _builtInNotCompats) {
             int indexL = pair.getKey();
             int indexR = pair.getValue();
@@ -1285,6 +1291,7 @@ public class Input {
 
 
         // could split the slotlist into 3 lists: COURSESLOTS, LABSLOTS, BOTHSLOTS
+        // or just add a dual-slot into both COURSESLOTS and LABSLOTS.
         // then the algortihm would be more efficient since if the $ was for a courseslot, then we would only expand a leaf into courseslot permutations.
         // but that is an optimization thing that is just saving the steps of checking hard constrait max=0
         // this would cut the tree in half though...

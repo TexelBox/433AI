@@ -557,7 +557,7 @@ public class Input {
                 return false;
             }
 
-            if (coursemax < 0 || coursemin < 0 || (coursemax < coursemin)) { // ~~~~~~~~~~~~~~maybe coursemin can be > coursemax, but the soft penalty will always be added
+            if (coursemax < 0 || coursemin < 0 || (coursemax < coursemin)) {
                 return false;
             }
 
@@ -567,7 +567,7 @@ public class Input {
             String hashKey = newSlot._hashKey;
             int hashIndex = newSlot._hashIndex;
 
-            // ~~~~~~~~~~~~~~~~~~~~~NOTE: I don't think I need to check slot validity again?
+            // NOTE: I don't think I need to check slot validity again?
 
             // NOTE: due to the order of the input file, the only way this slot was already found, is that it was under course slots header (_courseSlot = true, so no need to check this flag)
             // RIGHT NOW duplicates are treated as an error, since they could list differing max/min
@@ -628,7 +628,7 @@ public class Input {
                 return false;
             }
 
-            if (labmax < 0 || labmin < 0 || (labmax < labmin)) { // ~~~~~~~~~~~~~~maybe labmin can be > labmax, but the soft penalty will always be added
+            if (labmax < 0 || labmin < 0 || (labmax < labmin)) { 
                 return false;
             }
 
@@ -724,13 +724,14 @@ public class Input {
 
 
     
-    // TODO~~~~~~~~~~~~~~~~~~~~~~~~~what if we get CPSC 433 LEC 01 TUT 01 and CPSC 433 TUT 01 / CPSC 433 LEC 02 TUT 01 (all result in errors)
-
     // UPDATES: now if we get CPSC 433 TUT 01, it returns an error if file didnt define any LEC for CPSC 433
     // if no error occurs, then we mark this lab not-compat with every lec section defined.
     // now if we get CPSC 433 LEC 01 TUT 02, it returns an error if file didnt define CPSC 433 LEC 01
     // if it was defined, then we mark this lab and its corresponding lec section as not-compat.
     // NOTE: these not-compats will be formally set in the 2D array in postProcess()
+
+    // UPDATE 2:
+    // now stuff like CPSC 433 LEC 01 TUT 01 and CPSC 433 LAB 01 both being defined (same tut/lab section number) will return an error.
 
     // return True if no error occurred...
     private boolean setLabsData(List<String> table) {
@@ -763,20 +764,36 @@ public class Input {
             int hashIndex = newCourse._hashIndex;
 
             if (!_mapCourseToIndex.containsKey(hashKey)) { // if this is the first time finding this lab...
-                _mapCourseToIndex.put(hashKey, hashIndex); // record that we have found this lab in file (just in case it shows up again)
-                _courseList.add(newCourse); // add this lab to end of list
-                _labDefined = true; // flag that at least 1 lab was found
 
                 String sharedHashKey = newCourse._sharedHashKey; // e.g. "CPSC:433"
                 if (!_mapClassIDToListOfLabsTuts.containsKey(sharedHashKey)) { // e.g. is this is the first time finding a lab/tut for CPSC 433...
+                    // no tuturial section number clashes to check for here
                     ArrayList<Integer> newList = new ArrayList<>(); // creating the list for the first time
                     newList.add(hashIndex); // keep track of the index of this lab/tut section for CPSC 433
                     _mapClassIDToListOfLabsTuts.put(sharedHashKey, newList);
                 }
                 else { // if the arraylist was already created by a previous LAB/TUT section of e.g. CPSC433, then we just add to the list
+                    // before adding to list we must check that this newCourse's tutorial/lab section number is different from all the other tuts/labs of same class (sharedHashkey)
+                    ArrayList<Integer> sharedLabsList = _mapClassIDToListOfLabsTuts.get(sharedHashKey); // get the list of tuts/labs sharing this class
+                    for(int j = 0; j < sharedLabsList.size(); j++) { // loop through all shared labs
+                        int otherLabIndex = sharedLabsList.get(j); // get index of next lab to check
+                        Course otherLab = _courseList[otherLabIndex]; // retrieve reference to the instance
+
+                        // now compare the tutorial section strings
+                        String newCourseLabSection = newCourse.SecondaryType == Course.SecondaryType.NONE ? newCourse._primarySection : newCourse._secondarySection;
+                        String otherLabLabSection = otherLab.SecondaryType == Course.SecondaryType.NONE ? otherLab._primarySection : otherLab._secondarySection;
+
+                        if (newCourseLabSection.equals(otherLabLabSection)) {
+                            System.out.println("ERROR: 2 different labs/tutorials of the same class cannot have the same lab number, " + otherLab._outputID + " & " + newCourse._outputID);
+                            return false;
+                        }
+
+                    } 
+
+                    // otherwise, we get here and no shared labs/tuts conflicted with this new labs tutorial section number
+
                     _mapClassIDToListOfLabsTuts.get(sharedHashKey).add(hashIndex); // add this section to list
                 }
-
 
                 // now we have a lab, but we need to check for LECs of same sharedHashKey
                 // case 1) if we have CPSC 433 TUT 01, we need at least 1 LEC of CPSC 433 in file
@@ -799,7 +816,7 @@ public class Input {
                             int nextCourseIndex = sharedLecsList.get(j); // get index of next LEC in list
                             _builtInNotCompats.add(new Pair<Integer,Integer>(hashIndex, nextCourseIndex));
                             _builtInNotCompats.add(new Pair<Integer,Integer>(nextCourseIndex, hashIndex)); // for NC symmetry
-                            // ~~~~~~~~~~~~~ then in postprocess, we can iterate through this list and set true in boolean area for each pair.
+                            // then in postprocess, we can iterate through this list and set true in boolean area for each pair.
                         }
                     }
                 }
@@ -821,7 +838,7 @@ public class Input {
                                 candidateFound = true; // update flag to prevent error
                                 _builtInNotCompats.add(new Pair<Integer,Integer>(hashIndex, nextCourseIndex));
                                 _builtInNotCompats.add(new Pair<Integer,Integer>(nextCourseIndex, hashIndex)); // for NC symmetry
-                                // ~~~~~~~~~~~~~ then in postprocess, we can iterate through this list and set true in boolean area for each pair.
+                                // then in postprocess, we can iterate through this list and set true in boolean area for each pair.
                             }
 
                         }
@@ -831,7 +848,14 @@ public class Input {
                             return false;
                         }
                     }
+
                 }
+
+                // get here with this lab/tut not causing any problems
+
+                _mapCourseToIndex.put(hashKey, hashIndex); // record that we have found this lab in file (just in case it shows up again)
+                _courseList.add(newCourse); // add this lab to end of list
+                _labDefined = true; // flag that at least 1 lab was found
 
             }
             else { // if this is a duplicate lab/lab or tut/tut or lab/tut or tut/lab definition...
@@ -1240,6 +1264,7 @@ public class Input {
     private boolean postProcessData() {
 
         // ~~~~~~~~~~~~NOTE: maybe just change this so we overwrite coursemax only
+        // I think it should stay as overwriting both, because the hard constraint is that we require EXCATLY 0 (min=max=0) courses in this slot
         //5. if _mapSlotToIndex contains hashkey for TU 11:00, then overwrite coursemax=coursemin=0
         // make sure to test this is the proper hashkey...
         String tu11HashKey = "TU:11:00"
@@ -1259,7 +1284,11 @@ public class Input {
 
 
 
-
+        // could split the slotlist into 3 lists: COURSESLOTS, LABSLOTS, BOTHSLOTS
+        // then the algortihm would be more efficient since if the $ was for a courseslot, then we would only expand a leaf into courseslot permutations.
+        // but that is an optimization thing that is just saving the steps of checking hard constrait max=0
+        // this would cut the tree in half though...
+        // or just re parse into 2 lists and then the end time can be easily set and then i can have a function here that sets the overlaps
 
 
         /*
@@ -1273,7 +1302,17 @@ public class Input {
             - OR a more efficient way would be to generate the list of slot overlaps fo every slot here, thus you dont linear search everytime.
 
 
-        2.  along the diagonal of _notcompatibles, check for a true value, if there is one return false (means the input file had a line saying a course is not-compat with itself) - maybe change to parse error?
+        * slot class should have 2 lists
+        * list1 is list of slot indices that would overlap this slot if this slot is considered as lecture slot
+        * list2 is list of slot indices that would overlap this slot if this slot is considered as lab slot
+        * what to do about slot overlaps
+        * only 2 forms of overlaps:
+        * LEC on TU and LAB on TU e.g. 
+        * TU 8-9:30
+        * LEC on MO (which implies on FR as well for 1hr) and LAB on FR
+
+
+        2.  along the diagonal of _notcompatibles, check for a true value, if there is one return false (means the input file had a line saying a course is not-compat with itself) - maybe change to parse error?, this should be a parse error that I handle above
         
         
 

@@ -565,20 +565,27 @@ public class Input {
             newSlot._coursemax = coursemax;
             newSlot._coursemin = coursemin;
 
-            String hashKey = newSlot._hashKey;
+            String courseSlotHashKey = newSlot._courseSlotHashKey;
             int hashIndex = newSlot._hashIndex;
 
             // NOTE: I don't think I need to check slot validity again?
 
+            if (_mapSlotToIndex.containsKey(courseSlotHashKey)) { // if this course slot was already defined in file...
+                System.out.println("ERROR: multiple definitions found for course slot, " + newSlot._outputID);
+                return false;
+            }
+
+            /*
             // NOTE: due to the order of the input file, the only way this slot was already found, is that it was under course slots header (_courseSlot = true, so no need to check this flag)
             // RIGHT NOW duplicates are treated as an error, since they could list differing max/min
             if (_mapSlotToIndex.containsKey(hashKey)) { 
                 return false;
             }
+            */
              
-            // get here if this is the first time this slot has been found in file...
+            // get here if this is the first time this course slot has been found in file...
              
-            _mapSlotToIndex.put(hashKey, hashIndex); // record that we have found this slot in file (just in case it shows up again)
+            _mapSlotToIndex.put(courseSlotHashKey, hashIndex); // record that we have found this course slot in file (just in case it shows up again)
             _slotList.add(newSlot); // add this slot to end of list
             _courseSlotDefined = true; // flag that at least 1 course slot was found
 
@@ -633,8 +640,19 @@ public class Input {
                 return false;
             }
 
-            String hashKey = newSlot._hashKey;
+            newSlot._labmax = labmax;
+            newSlot._labmin = labmin;
 
+            String labSlotHashKey = newSlot._labSlotHashKey;
+            int hashIndex = newSlot._hashIndex;
+
+            if (_mapSlotToIndex.containsKey(labSlotHashKey)) { // if this lab slot was already defined in file...
+                System.out.println("ERROR: multiple definitions found for lab slot, " + newSlot._outputID);
+                return false;
+            }
+
+
+            /*
             // NOTE: 2 ways of hashkey already existing...
             // 1. only found before under CourseSlots (good, just overwrite lab fields)
             // 2. found before under LabSlots (BAD, - duplicate definition)
@@ -651,15 +669,12 @@ public class Input {
                     _slotList.get(exHashIndex)._isLabSlot = true;
                 }
             }
+            */
              
-            // get here if this is the first time this slot has been found in file...
+            // get here if this is the first time this lab slot has been found in file...
 
-            int hashIndex = newSlot._hashIndex;
 
-            newSlot._labmax = labmax;
-            newSlot._labmin = labmin;
-             
-            _mapSlotToIndex.put(hashKey, hashIndex); // record that we have found this slot in file (just in case it shows up again)
+            _mapSlotToIndex.put(labSlotHashKey, hashIndex); // record that we have found this lab slot in file (just in case it shows up again)
             _slotList.add(newSlot); // add this slot to end of list
             _labSlotDefined = true; // flag that at least 1 lab slot was found
 
@@ -1001,13 +1016,42 @@ public class Input {
             // Now we can use the hashmap instead to check validity (since only valid and defined slots got hashed) 
 
             // use one of the infos that isn't null (since we know theres at least 1, if both are !null, then we can use either since we just need the hashkey which is the same)
-            String slotHashKey;
+            //String courseSlotHashKey;
+            //String labSlotHashKey;
+
+            if (slotInfoLEC != null) {
+                String courseSlotHashKey = slotInfoLEC._courseSlotHashKey;
+                if (!_mapSlotToIndex.containsKey(courseSlotHashKey)) { // slot fits format, but it isn't VALID or DEFINED
+                    continue; // skip this line
+                }
+                // get here if it is valid and defined, so we can get its hashIndex
+                int courseSlotHashIndex = _mapSlotToIndex.get(courseSlotHashKey);
+                // flag this course and this slot as unwanted
+                _unwanteds[courseHashIndex][courseSlotHashIndex] = true;
+            }
+
+            if (slotInfoLAB != null) {
+                String labSlotHashKey = slotInfoLAB._labSlotHashKey;
+                if (!_mapSlotToIndex.containsKey(labSlotHashKey)) { // slot fits format, but it isn't VALID or DEFINED
+                    continue; // skip this line
+                }
+                // get here if it is valid and defined, so we can get its hashIndex
+                int labSlotHashIndex = _mapSlotToIndex.get(labSlotHashKey);
+                // flag this course and this slot as unwanted
+                _unwanteds[courseHashIndex][labSlotHashIndex] = true;
+            }
+
+
+
+
+            /*
             if (slotInfoLEC != null) {
                 slotHashKey = slotInfoLEC._hashKey;
             }
             else { // slotInfoLAB != null
                 slotHashKey = slotInfoLAB._hashKey;
             }
+            
 
             if (!_mapSlotToIndex.containsKey(slotHashKey)) { // slot fits format, but it isn't VALID or DEFINED
                 continue; // skip this line
@@ -1018,6 +1062,7 @@ public class Input {
             // flag this course and this slot as unwanted
 
             _unwanteds[courseHashIndex][slotHashIndex] = true;
+            */
 
         }    
 
@@ -1074,12 +1119,67 @@ public class Input {
 
             // get here if prefValue fits format (RULE: any string that can be parsed as a natural number)
             
-            // now that we have checked for typos, we can check VALIDITY/DEFINITION of slot then course
+            // now that we have checked for typos, we can check VALIDITY/DEFINITION of course then slot
 
             // Now we can use the hashmap instead to check validity (since only valid and defined slots got hashed) 
 
             // use one of the infos that isn't null (since we know theres at least 1, if both are !null, then we can use either since we just need the hashkey which is the same)
 
+            // UPDATE: fixed it so that preference only applies to courseslot for a course or labslot for a lab
+
+
+            // now check for course definition
+            String courseHashKey = courseInfo._hashKey;
+
+            if (!_mapCourseToIndex.containsKey(courseHashKey)) { // if line has a valid course, but wasn't defined in our file, we can skip it
+                System.out.println("WARNING: preference specifies an undefined course on line, " + line);
+                continue; // skip this line
+            }
+            // get here if it is defined so we can get its hashIndex
+            int courseHashIndex = _mapCourseToIndex.get(courseHashKey);
+
+
+            if (courseInfo._isLecture) { // if line has a course
+                if (slotInfoLEC == null) { // this implies that slotInfoLab != null, which means that line paired up course w/ lab slot
+                    // print warning and ignore this line (invalid slot to class match)
+                    System.out.println("WARNING: ignoring preference between course and invalid slot, " + line);
+                    continue; // go to next line
+                }
+                else { // if slot is a course slot (or both slot types, but we ignore lab slot one)
+                    String courseSlotHashKey = slotInfoLEC._courseSlotHashKey;
+                    // now check if in map (if not, then its either not verified or not defined)
+                    if (!_mapSlotToIndex.containsKey(courseSlotHashKey)) { // slot fits format, but it isn't VALID or DEFINED
+                        System.out.println("WARNING: ignoring preference between course and invalid/undefined slot, " + line);
+                        continue; // skip this line
+                    }
+                    // get here if it is valid and defined, so we can get its hashIndex
+                    int courseSlotHashIndex = _mapSlotToIndex.get(courseSlotHashKey);
+                    // update pref value...
+                    _preferences[courseHashIndex][courseSlotHashIndex] = prefValue;
+                }
+            }
+            else { // if line has a lab
+                if (slotInfoLAB == null) { // this implies that slotInfoLEC != null, which means that line paired up lab w/ course slot
+                    // print warning and ignore this line (invalid slot to class match)
+                    System.out.println("WARNING: ignoring preference between lab and invalid slot, " + line);
+                    continue; // go to next line
+                }
+                else { // if slot is a lab slot (or both slot types, but we ignore course slot one)
+                    String labSlotHashKey = slotInfoLAB._labSlotHashKey;
+                    // now check if in map (if not, then its either not verified or not defined)
+                    if (!_mapSlotToIndex.containsKey(labSlotHashKey)) { // slot fits format, but it isn't VALID or DEFINED
+                        System.out.println("WARNING: ignoring preference between lab and invalid/undefined slot, " + line);
+                        continue; // skip this line
+                    }
+                    // get here if it is valid and defined, so we can get its hashIndex
+                    int labSlotHashIndex = _mapSlotToIndex.get(labSlotHashKey);
+                    // update pref value...
+                    _preferences[courseHashIndex][labSlotHashIndex] = prefValue;
+                }
+            }
+
+
+            /*
             String slotHashKey;
             if (slotInfoLEC != null) {
                 slotHashKey = slotInfoLEC._hashKey;
@@ -1109,7 +1209,7 @@ public class Input {
 
             // update pref value...
             _preferences[courseHashIndex][slotHashIndex] = prefValue;
-
+            */
         }    
 
         return true;        
@@ -1168,8 +1268,6 @@ public class Input {
 
 
 
-    // QUESTION: ~~~~~~~~~~~~~~~~~~~CAN 813/913 be found normally in the file???? - i'm assuming not (no they can't)
-
     // return True if no error occurred...
     private boolean setPartialAssignmentsData(List<String> table) {
 
@@ -1210,13 +1308,105 @@ public class Input {
             String courseHashKey = courseInfo._hashKey;
 
             if (!_mapCourseToIndex.containsKey(courseHashKey)) { // if line has a valid course, but wasn't defined in our file, we have a fatal error
+                System.out.println("ERROR: invalid/undefined course found under partial assignments, " + courseInfo._outputID);
                 return false;
             }
             // get here if it is defined so we can get its hashIndex
             int courseHashIndex = _mapCourseToIndex.get(courseHashKey);
 
+            // now must check if this course has already been partassigned in a previous line (error if we have a duplicate)
+
+            if (_partialAssignments[courseHashIndex] != null) { // if this is a duplicate or a different assignment...
+                System.out.println("ERROR: partial assignment of a course has multiple definitions.");
+                return false;
+            }
+
+            // get here if this is the first partassign line for this course
+
             // Now we can use the hashmap instead to check validity (since only valid and defined slots got hashed) 
 
+            if (slotInfoLEC != null && slotInfoLAB == null) { // only parsed as course slot
+                String courseSlotHashKey = slotInfoLEC._courseSlotHashKey;
+                if (!_mapSlotToIndex.containsKey(courseSlotHashKey)) { // slot fits format, but it isn't VALID or DEFINED
+                    System.out.println("ERROR: invalid/undefined slot found under partial assignments, " + slotInfoLEC._outputID);
+                    return false;
+                }
+                // get here if it is valid and defined course slot, so we can get its hashIndex
+                int courseSlotHashIndex = _mapSlotToIndex.get(courseSlotHashKey);
+
+                Course theCourse = _courseList.get(courseHashIndex);
+
+                if (!theCourse._isLecture) { // if we are assigning a lab to this course slot...
+                    System.out.println("ERROR: partial assignment mismatch of lab to course slot, " + line);
+                    return false;
+                }
+
+                // get here if course matched to this course slot...
+
+                // can now assign this course slot to course index of list
+                Slot theSlot = _slotList.get(courseSlotHashIndex);
+                _partialAssignments[courseHashIndex] = theSlot;                
+            }
+            else if (slotInfoLAB != null && slotInfoLEC == null) { // only parsed as lab slot
+                String labSlotHashKey = slotInfoLAB._labSlotHashKey;
+                if (!_mapSlotToIndex.containsKey(labSlotHashKey)) { // slot fits format, but it isn't VALID or DEFINED
+                    System.out.println("ERROR: invalid/undefined slot found under partial assignments, " + slotInfoLAB._outputID);
+                    return false;
+                }
+                // get here if it is valid and defined lab slot, so we can get its hashIndex
+                int labSlotHashIndex = _mapSlotToIndex.get(labSlotHashKey);
+
+                Course theCourse = _courseList.get(courseHashIndex);
+
+                if (theCourse._isLecture) { // if we are assigning a course to this lab slot...
+                    System.out.println("ERROR: partial assignment mismatch of course to lab slot, " + line);
+                    return false;
+                }
+
+                // get here if lab matched to this lab slot...
+
+                // can now assign this lab slot to lab index of list
+                Slot theSlot = _slotList.get(labSlotHashIndex);
+                _partialAssignments[courseHashIndex] = theSlot; 
+            }
+            else { // parsed as both, but we should just ignore the opposite one.
+                Course theCourse = _courseList.get(courseHashIndex);
+
+                if (theCourse._isLecture) { // use the course slot version of this slot
+                    String courseSlotHashKey = slotInfoLEC._courseSlotHashKey;
+                    if (!_mapSlotToIndex.containsKey(courseSlotHashKey)) { // slot fits format, but it isn't VALID or DEFINED
+                        System.out.println("ERROR: invalid/undefined slot found under partial assignments, " + slotInfoLEC._outputID);
+                        return false;
+                    }
+                    // get here if it is valid and defined course slot, so we can get its hashIndex
+                    int courseSlotHashIndex = _mapSlotToIndex.get(courseSlotHashKey);
+
+                    // get here if course matched to this course slot...
+
+                    // can now assign this course slot to course index of list
+                    Slot theSlot = _slotList.get(courseSlotHashIndex);
+                    _partialAssignments[courseHashIndex] = theSlot; 
+                }
+                else { // use the lab slot version of this slot
+                    String labSlotHashKey = slotInfoLAB._labSlotHashKey;
+                    if (!_mapSlotToIndex.containsKey(labSlotHashKey)) { // slot fits format, but it isn't VALID or DEFINED
+                        System.out.println("ERROR: invalid/undefined slot found under partial assignments, " + slotInfoLAB._outputID);
+                        return false;
+                    }
+                    // get here if it is valid and defined lab slot, so we can get its hashIndex
+                    int labSlotHashIndex = _mapSlotToIndex.get(labSlotHashKey);
+
+                    // get here if lab matched to this lab slot...
+
+                    // can now assign this lab slot to lab index of list
+                    Slot theSlot = _slotList.get(labSlotHashIndex);
+                    _partialAssignments[courseHashIndex] = theSlot; 
+                }
+            }
+
+
+
+            /*
             // use one of the infos that isn't null (since we know theres at least 1, if both are !null, then we can use either since we just need the hashkey which is the same)
             String slotHashKey;
             if (slotInfoLEC != null) {
@@ -1256,6 +1446,7 @@ public class Input {
             // can now assign this slot to course index of list
 
             _partialAssignments[courseHashIndex] = theSlot;
+            */
 
         }    
 
@@ -1274,7 +1465,7 @@ public class Input {
         // I think it should stay as overwriting both, because the hard constraint is that we require EXCATLY 0 (min=max=0) courses in this slot
         // 5. if _mapSlotToIndex contains hashkey for TU 11:00, then overwrite coursemax=coursemin=0
         // make sure to test this is the proper hashkey...
-        String tu11HashKey = "TU:11:00";
+        String tu11HashKey = "TU:11:00:LEC";
         if (_mapSlotToIndex.containsKey(tu11HashKey)) {
             int tu11HashIndex = _mapSlotToIndex.get(tu11HashKey);
             Slot tu11Slot = _slotList.get(tu11HashIndex); // retrieve reference to the slot
@@ -1653,12 +1844,15 @@ public class Input {
         
         int hashIndex = _mapSlotToIndex.size(); // thus the new index is the size of map. ex. it contains 3 slots already (0,1,2), now we want to put this 4th slot at index 3
         Slot newSlot = new Slot(hashIndex, day, startHourStr, startMinuteStr);
+        newSlot._isCourseSlot = isCourseSlot;
+        /*
         if (isCourseSlot) {
             newSlot._isCourseSlot = true;
         }
         else {
             newSlot._isLabSlot = true;
         }
+        */
 
         // NOTE: verification must only occur after _isCourseSlot or _isLabSlot are set, so don't change this order
 

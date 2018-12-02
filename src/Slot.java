@@ -38,15 +38,26 @@ public class Slot {
 
     public boolean _isEveningSlot;
 
-    public boolean _isCourseSlot = false; // set true if this slot was found under CourseSlot header, ~~~~~~~~~~~~~~~~~~~these 2 are SET EXTERNALLY~~~~~~~~~~~~~~~~~~~~~~
-    public boolean _isLabSlot = false; // set true if this slot was found under LabSlot header 
+    public boolean _isCourseSlot; // if false then its a labslot ~~~~~~~~~~~~~~~~set externally
+
+    //public boolean _isCourseSlot = false; // set true if this slot was found under CourseSlot header, ~~~~~~~~~~~~~~~~~~~these 2 are SET EXTERNALLY~~~~~~~~~~~~~~~~~~~~~~
+    //public boolean _isLabSlot = false; // set true if this slot was found under LabSlot header 
 
     public String _outputID; // e.g. MO, 10:00
 
-    public String _hashKey; // for lookup of its index in hashmap, init this when we construct this object and push its key/value pair into hashmap
+    public String _courseSlotHashKey;
+    public String _labSlotHashKey;
+
+
+    //public String _hashKey; // for lookup of its index in hashmap, init this when we construct this object and push its key/value pair into hashmap
 
 
 
+
+    //private int _endHourNum;
+    //private int _endMinuteNum;
+
+    //public list of overlapping slots (need to set symmetrically)
 
     // algorithm stuff...
     public List<Integer> _courseIndices = new ArrayList<Integer>(); // current indices of courses assigned to this slot
@@ -66,7 +77,7 @@ public class Slot {
         setTimeNums();
         setEveningFlag();
         setOutputID();
-        setHashKey();
+        setHashKeys();
     }
 
 
@@ -74,66 +85,66 @@ public class Slot {
     private void initValidSlots() { // inits the 2 static hashsets of valid slot hashKeys, only need to do the work for the first time (first instance)
         if (_validCourseSlots.isEmpty()) { // init valid slots for LEC
             // MONDAY:
-            _validCourseSlots.add("MO:8:00");
-            _validCourseSlots.add("MO:9:00");
-            _validCourseSlots.add("MO:10:00");
-            _validCourseSlots.add("MO:11:00");
-            _validCourseSlots.add("MO:12:00");
-            _validCourseSlots.add("MO:13:00");
-            _validCourseSlots.add("MO:14:00");
-            _validCourseSlots.add("MO:15:00");
-            _validCourseSlots.add("MO:16:00");
-            _validCourseSlots.add("MO:17:00");
-            _validCourseSlots.add("MO:18:00");
-            _validCourseSlots.add("MO:19:00");
-            _validCourseSlots.add("MO:20:00");
+            _validCourseSlots.add("MO:8:00:LEC");
+            _validCourseSlots.add("MO:9:00:LEC");
+            _validCourseSlots.add("MO:10:00:LEC");
+            _validCourseSlots.add("MO:11:00:LEC");
+            _validCourseSlots.add("MO:12:00:LEC");
+            _validCourseSlots.add("MO:13:00:LEC");
+            _validCourseSlots.add("MO:14:00:LEC");
+            _validCourseSlots.add("MO:15:00:LEC");
+            _validCourseSlots.add("MO:16:00:LEC");
+            _validCourseSlots.add("MO:17:00:LEC");
+            _validCourseSlots.add("MO:18:00:LEC");
+            _validCourseSlots.add("MO:19:00:LEC");
+            _validCourseSlots.add("MO:20:00:LEC");
             // TUESDAY:
-            _validCourseSlots.add("TU:8:00");
-            _validCourseSlots.add("TU:9:30");
-            _validCourseSlots.add("TU:11:00");
-            _validCourseSlots.add("TU:12:30");
-            _validCourseSlots.add("TU:14:00");
-            _validCourseSlots.add("TU:15:30");
-            _validCourseSlots.add("TU:17:00");
-            _validCourseSlots.add("TU:18:30");
+            _validCourseSlots.add("TU:8:00:LEC");
+            _validCourseSlots.add("TU:9:30:LEC");
+            _validCourseSlots.add("TU:11:00:LEC");
+            _validCourseSlots.add("TU:12:30:LEC");
+            _validCourseSlots.add("TU:14:00:LEC");
+            _validCourseSlots.add("TU:15:30:LEC");
+            _validCourseSlots.add("TU:17:00:LEC");
+            _validCourseSlots.add("TU:18:30:LEC");
         }
 
         if (_validLabSlots.isEmpty()) { // init valid slots for LAB/TUT
             // MONDAY:
-            _validLabSlots.add("MO:8:00");
-            _validLabSlots.add("MO:9:00");
-            _validLabSlots.add("MO:10:00");
-            _validLabSlots.add("MO:11:00");
-            _validLabSlots.add("MO:12:00");
-            _validLabSlots.add("MO:13:00");
-            _validLabSlots.add("MO:14:00");
-            _validLabSlots.add("MO:15:00");
-            _validLabSlots.add("MO:16:00");
-            _validLabSlots.add("MO:17:00");
-            _validLabSlots.add("MO:18:00");
-            _validLabSlots.add("MO:19:00");
-            _validLabSlots.add("MO:20:00");
+            _validLabSlots.add("MO:8:00:LAB");
+            _validLabSlots.add("MO:9:00:LAB");
+            _validLabSlots.add("MO:10:00:LAB");
+            _validLabSlots.add("MO:11:00:LAB");
+            _validLabSlots.add("MO:12:00:LAB");
+            _validLabSlots.add("MO:13:00:LAB");
+            _validLabSlots.add("MO:14:00:LAB");
+            _validLabSlots.add("MO:15:00:LAB");
+            _validLabSlots.add("MO:16:00:LAB");
+            _validLabSlots.add("MO:17:00:LAB");
+            _validLabSlots.add("MO:18:00:LAB");
+            _validLabSlots.add("MO:19:00:LAB");
+            _validLabSlots.add("MO:20:00:LAB");
             // TUESDAY:
-            _validLabSlots.add("TU:8:00");
-            _validLabSlots.add("TU:9:00");
-            _validLabSlots.add("TU:10:00");
-            _validLabSlots.add("TU:11:00");
-            _validLabSlots.add("TU:12:00");
-            _validLabSlots.add("TU:13:00");
-            _validLabSlots.add("TU:14:00");
-            _validLabSlots.add("TU:15:00");
-            _validLabSlots.add("TU:16:00");
-            _validLabSlots.add("TU:17:00");
-            _validLabSlots.add("TU:18:00");
-            _validLabSlots.add("TU:19:00");
-            _validLabSlots.add("TU:20:00");
+            _validLabSlots.add("TU:8:00:LAB");
+            _validLabSlots.add("TU:9:00:LAB");
+            _validLabSlots.add("TU:10:00:LAB");
+            _validLabSlots.add("TU:11:00:LAB");
+            _validLabSlots.add("TU:12:00:LAB");
+            _validLabSlots.add("TU:13:00:LAB");
+            _validLabSlots.add("TU:14:00:LAB");
+            _validLabSlots.add("TU:15:00:LAB");
+            _validLabSlots.add("TU:16:00:LAB");
+            _validLabSlots.add("TU:17:00:LAB");
+            _validLabSlots.add("TU:18:00:LAB");
+            _validLabSlots.add("TU:19:00:LAB");
+            _validLabSlots.add("TU:20:00:LAB");
             // FRIDAY:
-            _validLabSlots.add("FR:8:00");
-            _validLabSlots.add("FR:10:00");
-            _validLabSlots.add("FR:12:00");
-            _validLabSlots.add("FR:14:00");
-            _validLabSlots.add("FR:16:00");
-            _validLabSlots.add("FR:18:00");
+            _validLabSlots.add("FR:8:00:LAB");
+            _validLabSlots.add("FR:10:00:LAB");
+            _validLabSlots.add("FR:12:00:LAB");
+            _validLabSlots.add("FR:14:00:LAB");
+            _validLabSlots.add("FR:16:00:LAB");
+            _validLabSlots.add("FR:18:00:LAB");
         }
 
     }
@@ -154,8 +165,10 @@ public class Slot {
         _outputID = _day.name() + ", " + _startHourStr + ":" + _startMinuteStr;
     }
 
-    private void setHashKey() {
-        _hashKey = _day.name() + ":" + Integer.toString(_startHourNum) + ":" + _startMinuteStr; // e.g. MO, 00:00 becomes MO:0:00, synonymously, MO, 0:00 becomes MO:0:00 (same hash)
+    private void setHashKeys() {
+        //_hashKey = _day.name() + ":" + Integer.toString(_startHourNum) + ":" + _startMinuteStr; // e.g. MO, 00:00 becomes MO:0:00, synonymously, MO, 0:00 becomes MO:0:00 (same hash)
+        _courseSlotHashKey = _day.name() + ":" + Integer.toString(_startHourNum) + ":" + _startMinuteStr + ":LEC";
+        _labSlotHashKey = _day.name() + ":" + Integer.toString(_startHourNum) + ":" + _startMinuteStr + ":LAB";
     }
 
     
@@ -164,12 +177,23 @@ public class Slot {
     // ONLY call this after construction (which will be enforced by default) and enforce that ALL of the external init happends before calling this fucntion
     public boolean verifySlotValidity() {
 
+        if (_isCourseSlot && !_validCourseSlots.contains(_courseSlotHashKey)) { // if this courseslot does not correspond to a valid day and start time...
+            return false;
+        }
+        if (!_isCourseSlot && !_validLabSlots.contains(_labSlotHashKey)) { // if this labslot does not correspond to a valid day and start time...
+            return false;
+        }
+
+
+
+        /*
         if (_isCourseSlot && !_validCourseSlots.contains(_hashKey)) { // if this courseslot does not correspond to a valid day and start time...
             return false;
         }
         if (_isLabSlot && !_validLabSlots.contains(_hashKey)) { // if this labslot does not correspond to a valid day and start time...
             return false;
         }
+        */
         
         // thus 2 checks are done if its is both slot types
 
@@ -181,8 +205,10 @@ public class Slot {
 
 
 
+    // ~~~~~~~~~~~~~~will call this after everything is init (at least after _isCourseSlot is set externally)
+    public void setEndTimeNums() {
 
-
+    }
 
 
 

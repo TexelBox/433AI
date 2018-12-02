@@ -159,6 +159,14 @@ public class Input {
     private List<Map.Entry<Integer,Integer>> _builtInNotCompats = new ArrayList<Map.Entry<Integer,Integer>>(); // post process will use this to update not-compatible array for lecs and labs of same sharedHashKey
 
 
+
+
+    // algo stuff..
+    // to help the andtree split the search space (e.g. only need to try all courseslots for a course)
+    public List<Slot> _courseSlotList = new ArrayList<>(); // combined these make up _slotList
+    public List<Slot> _labSlotList = new ArrayList<>();
+
+
     // IDEAS:
 
     /*
@@ -432,11 +440,13 @@ public class Input {
         int n = _slotList.size(); // N = number of possible slots
         int s = _courseList.size(); // S = number of courses (Lectures + labs/tuts) to schedule
 
-        _notCompatibles = new boolean[s][s]; // symmetric
-        _unwanteds = new boolean[s][n];
-        _preferences = new int[s][n];
-        _pairs = new boolean[s][s]; // symmetric
-        _partialAssignments = new Slot[s];
+        _notCompatibles = new boolean[s+2][s+2]; // symmetric
+        _unwanteds = new boolean[s+2][n];
+        _preferences = new int[s+2][n];
+        _pairs = new boolean[s+2][s+2]; // symmetric
+        _partialAssignments = new Slot[s+2];
+
+        // I changed it to be s+2 to reserve the extra last 2 rows/cols for 813 and then 913 (in that order) if we have to set them in postprocess
 
         // MAYBE do any other initializtion?
 
@@ -1480,6 +1490,8 @@ public class Input {
             _notCompatibles[indexL][indexR] = true;
         }
 
+
+
         // initialize the sets of overlapping slots for each slot
         // check over each pair of slots in our slotslist and check if they overlap
         // if they do, then add each other to the other's overlaps set
@@ -1498,51 +1510,99 @@ public class Input {
             }
         }
 
+        // NOTE: if we dont have 813 and dont have 913 then last 2 cells will be empty
+        // if we have 813 and not 913, then 813 will go in 2nd last cell
+        // if we have 913 and not 813, then 913 will go in 2nd last cell
+        // if we have both then 813 will go in 2nd last cell and 913 will go in last cell (order matters)
+
+        // 813/913 stuff here 
+        // check for 313/413
+        // where will the data be stored?
+        // i could have init the arrays to be 2 rows and 2 cols bigger reserving 2nd last for 813 and last for 913 only if we have to add them here
+        // since 813/913 will never be found in file we are fine.
+        // then construct both courses manually and check that their slot was defined in file. if not then error.
+        // if everythings alright then set all their data structure cells manually here
+
+
+        // these 3 blocks are to get the order right
+        if (_mapClassIDToListOfLecs.containsKey("CPSC:313") && !_mapClassIDToListOfLecs.containsKey("CPSC:413")) { // only 313 defined
+            // create CPSC 813 LAB 01
+            // initialize all its data
+            // add to end of course list
+            if (_mapSlotToIndex.containsKey("TU:18:00:LAB")) {
+                int hashIndex813 = _courseList.size(); // add to end
+                createAndAdd813(hashIndex813);
+            }
+            else {
+                System.out.println("ERROR: CPSC 813 cannot be initialized due to TU 18:00 lab slot never being defined."); // ~~~~~~~~~~~NOTE: i need to change this so that it overrides the NO VALID SOLUTION
+                return false;
+            }
+            
+        }
+        else if (!_mapClassIDToListOfLecs.containsKey("CPSC:313") && _mapClassIDToListOfLecs.containsKey("CPSC:413")) { // only 413 defined
+            // create CPSC 913 LAB 01
+            // initialize all its data
+            // add to end of course list
+            if (_mapSlotToIndex.containsKey("TU:18:00:LAB")) {
+                int hashIndex913 = _courseList.size(); // add to end
+                createAndAdd913(hashIndex913);
+            }
+            else {
+                System.out.println("ERROR: CPSC 913 cannot be initialized due to TU 18:00 lab slot never being defined."); // ~~~~~~~~~~~NOTE: i need to change this so that it overrides the NO VALID SOLUTION
+                return false;
+            }
+        }
+        else if (_mapClassIDToListOfLecs.containsKey("CPSC:313") && _mapClassIDToListOfLecs.containsKey("CPSC:413")) { // both 313 and 413 defined
+            // create CPSC 813 LAB 01
+            // initialize all its data
+            // add to end of course list
+            // then...
+            // create CPSC 913 LAB 01
+            // initialize all its data
+            // add to end of course list
+            if (_mapSlotToIndex.containsKey("TU:18:00:LAB")) {
+                int hashIndex813 = _courseList.size(); // add to end
+                createAndAdd813(hashIndex813);
+                int hashIndex913 = _courseList.size(); // add to end
+                createAndAdd913(hashIndex913);
+            }
+            else {
+                System.out.println("ERROR: CPSC 813 and CPSC 913 cannot be initialized due to TU 18:00 lab slot never being defined."); // ~~~~~~~~~~~NOTE: i need to change this so that it overrides the NO VALID SOLUTION
+                return false;
+            }
+        }
+        // otherwise, if neither 313 and 413 are found in file, we will do nothing and just ignore the extra data structure rows and cols.
 
 
 
 
 
-        // or just re parse into 2 lists and then the end time can be easily set
+        //4. for all the partassigns, make sure that that course and slot are also not 'unwanted', if so, return false
+        for (int courseIndex = 0; courseIndex < _partialAssignments.length; courseIndex++) {
+            Slot partAssignedSlot = _partialAssignments[courseIndex];
+            if (partAssignedSlot != null) {
+                int slotIndex = partAssignedSlot._hashIndex;
+                if (_unwanteds[courseIndex][slotIndex]) { // contradiction!
+                    return false;
+                }
+            }
+        }
 
 
-        /*
-        STUFF TO DO HERE...
 
-        1.  - OR i could just use a 2D boolean NxN array _slotOverlaps which would be symmetric
-            -create private field in this class: ArrayList<Slot>[] _slotOverlaps; which should be initialized to size N (number of slots), [i] corresponds to the list of overlapping slots with slot i
-            -inside Slot.java create a function to check if 'this' slot overlaps with another slot passed as a param. (factor in stuff like type, day, time)
-            -iterate through _slotList and check for overlaps with all entry to the right of it (shifted nested for loops) and update this 2D array.
-            -NOTE: make sure that a slot doesn't overlap with itself (technically it does, but keep it at default FALSE in order to avoid major errors/redundancy)  
-            - OR a more efficient way would be to generate the list of slot overlaps fo every slot here, thus you dont linear search everytime.
+        // DO THIS AFTER EVEYTHING IS SET PROPERLY
+        // for algorithms use:
+        // split slot list into courseslots and labslots which makes less permutations (less child nodes upon expand) to check
+        for (Slot slot : _slotList) {
+            if (slot._isCourseSlot) {
+                _courseSlotList.add(slot);
+            }
+            else {
+                _labSlotList.add(slot);
+            }
+        }
 
-
-        * slot class should have 2 lists
-        * list1 is list of slot indices that would overlap this slot if this slot is considered as lecture slot
-        * list2 is list of slot indices that would overlap this slot if this slot is considered as lab slot
-        * what to do about slot overlaps
-        * only 2 forms of overlaps:
-        * LEC on TU and LAB on TU e.g. 
-        * TU 8-9:30
-        * LEC on MO (which implies on FR as well for 1hr) and LAB on FR
-
-
-        2.  along the diagonal of _notcompatibles, check for a true value, if there is one return false (means the input file had a line saying a course is not-compat with itself) - maybe change to parse error?, this should be a parse error that I handle above
         
-        
-
-        4. for all the partassigns, make sure that that course and slot are also not 'not-compatible', if so, return false
-
-
-
-
-
-        n. last thing to do should be to check for 313/413 and add 813/913 if needed and also init all the incompatibilities and special rules
-        - we can store them as CPSC 813/913 LAB 01 and if slot TU 18:00 was defined, then set a partassign for this (also make sure its labmax is >= 1 otherwise output no solution), if not defined, can create this slot with labmin = labmax = 1/2
-        - recursively set their not-compatibles
-        - make sure we don't fall into an infinite loop! can mark every course checked?
-        */
-
 
         return true;
     }
@@ -1559,7 +1619,135 @@ public class Input {
 
 
 
+    // NOTE: will only ever call this one when a 313 LEC was found and TU:18:00:LAB was defined
+    private void createAndAdd813(int hashIndex) {
+        Course cpsc813Lab01 = new Course(hashIndex, "CPSC", "813", Course.PrimaryType.LAB, "01");
+        // now update all the data structures...
+        _mapCourseToIndex.put(cpsc813Lab01._hashKey, hashIndex);
+        _courseList.add(cpsc813Lab01);
 
+        // set partassign
+        int tu18SlotIndex = _mapSlotToIndex.get("TU:18:00:LAB"); 
+        _partialAssignments[hashIndex] = _slotList.get(tu18SlotIndex);
+
+        // set not-compat with any class in 313 and any of its not-compats (with lectures) as well
+
+        String sharedHashKey313 = "CPSC:313";
+
+        if (_mapClassIDToListOfLecs.containsKey(sharedHashKey313)) { // know this is true but whatever (if there are lecs defined for 313)
+            ArrayList<Integer> lecIndices313 = _mapClassIDToListOfLecs.get(sharedHashKey313);
+            for (int lecIndex : lecIndices313) {
+                // set 813 NC with this 313 lec
+                _notCompatibles[hashIndex][lecIndex] = true; // symmetric
+                _notCompatibles[lecIndex][hashIndex] = true;
+
+                // now transitively with any lectures NC with this 313 lec
+                // get the array row (or is it col, doesntmatter its symmetric) of NCs with this 313 lec and iterate through checking for IsLecture
+                for (int transitiveIndex = 0; transitiveIndex < _courseList.size(); transitiveIndex++) {
+                    Course transCourse = _courseList.get(transitiveIndex);
+                    if (transCourse._isLecture) {
+                        if (_notCompatibles[lecIndex][transitiveIndex]) { // if thus 313 lec is not compat with this transitive lec...
+                            _notCompatibles[hashIndex][transitiveIndex] = true; // symmetric
+                            _notCompatibles[transitiveIndex][hashIndex] = true;
+                        }
+                    }
+                    // if lab just ignore it
+                }
+            }
+        }
+        if (_mapClassIDToListOfLabsTuts.containsKey(sharedHashKey313)) { // if there are labs/tuts defined for 313...
+            ArrayList<Integer> labIndices313 = _mapClassIDToListOfLabsTuts.get(sharedHashKey313);
+            for (int labIndex : labIndices313) {
+                // set 813 NC with this 313 lab/tut
+                _notCompatibles[hashIndex][labIndex] = true; // symmetric
+                _notCompatibles[labIndex][hashIndex] = true;
+
+                // now transitively with any lectures NC with this 313 lab
+                // get the array row (or is it col, doesntmatter its symmetric) of NCs with this 313 lab and iterate through checking for IsLecture
+                for (int transitiveIndex = 0; transitiveIndex < _courseList.size(); transitiveIndex++) {
+                    Course transCourse = _courseList.get(transitiveIndex);
+                    if (transCourse._isLecture) {
+                        if (_notCompatibles[labIndex][transitiveIndex]) { // if thus 313 lab is not compat with this transitive lec...
+                            _notCompatibles[hashIndex][transitiveIndex] = true; // symmetric
+                            _notCompatibles[transitiveIndex][hashIndex] = true;
+                        }
+                    }
+                    // if lab just ignore it
+                }
+            }
+        }
+
+        // there might be the chance that 813 gets set not-compat with itself here so i'm gonna overwrite this here to be SAFE
+        _notCompatibles[hashIndex][hashIndex] = false;
+    }
+
+
+
+
+
+
+
+    // NOTE: will only ever call this one when a 413 LEC was found and TU:18:00:LAB was defined
+    private void createAndAdd913(int hashIndex) {
+        Course cpsc913Lab01 = new Course(hashIndex, "CPSC", "913", Course.PrimaryType.LAB, "01");
+        // now update all the data structures...
+        _mapCourseToIndex.put(cpsc913Lab01._hashKey, hashIndex);
+        _courseList.add(cpsc913Lab01);
+
+        // set partassign
+        int tu18SlotIndex = _mapSlotToIndex.get("TU:18:00:LAB"); 
+        _partialAssignments[hashIndex] = _slotList.get(tu18SlotIndex);
+
+        // set not-compat with any class in 413 and any of its not-compats (with lectures) as well
+
+        String sharedHashKey413 = "CPSC:413";
+
+        if (_mapClassIDToListOfLecs.containsKey(sharedHashKey413)) { // know this is true but whatever (if there are lecs defined for 413)
+            ArrayList<Integer> lecIndices413 = _mapClassIDToListOfLecs.get(sharedHashKey413);
+            for (int lecIndex : lecIndices413) {
+                // set 913 NC with this 413 lec
+                _notCompatibles[hashIndex][lecIndex] = true; // symmetric
+                _notCompatibles[lecIndex][hashIndex] = true;
+
+                // now transitively with any lectures NC with this 413 lec
+                // get the array row (or is it col, doesntmatter its symmetric) of NCs with this 413 lec and iterate through checking for IsLecture
+                for (int transitiveIndex = 0; transitiveIndex < _courseList.size(); transitiveIndex++) {
+                    Course transCourse = _courseList.get(transitiveIndex);
+                    if (transCourse._isLecture) {
+                        if (_notCompatibles[lecIndex][transitiveIndex]) { // if thus 413 lec is not compat with this transitive lec...
+                            _notCompatibles[hashIndex][transitiveIndex] = true; // symmetric
+                            _notCompatibles[transitiveIndex][hashIndex] = true;
+                        }
+                    }
+                    // if lab just ignore it
+                }
+            }
+        }
+        if (_mapClassIDToListOfLabsTuts.containsKey(sharedHashKey413)) { // if there are labs/tuts defined for 413...
+            ArrayList<Integer> labIndices413 = _mapClassIDToListOfLabsTuts.get(sharedHashKey413);
+            for (int labIndex : labIndices413) {
+                // set 913 NC with this 413 lab/tut
+                _notCompatibles[hashIndex][labIndex] = true; // symmetric
+                _notCompatibles[labIndex][hashIndex] = true;
+
+                // now transitively with any lectures NC with this 413 lab
+                // get the array row (or is it col, doesntmatter its symmetric) of NCs with this 413 lab and iterate through checking for IsLecture
+                for (int transitiveIndex = 0; transitiveIndex < _courseList.size(); transitiveIndex++) {
+                    Course transCourse = _courseList.get(transitiveIndex);
+                    if (transCourse._isLecture) {
+                        if (_notCompatibles[labIndex][transitiveIndex]) { // if thus 413 lab is not compat with this transitive lec...
+                            _notCompatibles[hashIndex][transitiveIndex] = true; // symmetric
+                            _notCompatibles[transitiveIndex][hashIndex] = true;
+                        }
+                    }
+                    // if lab just ignore it
+                }
+            }
+        }
+
+        // there might be the chance that 913 gets set not-compat with itself here so i'm gonna overwrite this here to be SAFE
+        _notCompatibles[hashIndex][hashIndex] = false;
+    }
 
 
 

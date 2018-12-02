@@ -96,8 +96,8 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
+import java.util.AbstractMap;
 import java.util.Map;
-import javafx.util.Pair;
 
 
 public class Input {
@@ -156,7 +156,8 @@ public class Input {
     // e.g. CPSC 433 TUT 01, CPSC 433 LEC 01 TUT 02 both have sharedHashKey "CPSC:433" and thus .get("CPSC:433") will return a list of size 2. 2 indices i,j each for these 2 course objects
     private Map<String, ArrayList<Integer>> _mapClassIDToListOfLabsTuts = new HashMap<>();
 
-    private List<Pair<Integer,Integer>> _builtInNotCompats = new ArrayList<Pair<Integer,Integer>>(); // post process will use this to update not-compatible array for lecs and labs of same sharedHashKey
+    private List<Map.Entry<Integer,Integer>> _builtInNotCompats = new ArrayList<Map.Entry<Integer,Integer>>(); // post process will use this to update not-compatible array for lecs and labs of same sharedHashKey
+
 
     // IDEAS:
 
@@ -495,7 +496,7 @@ public class Input {
         }
         else { // if 1 line
             // check that this line is not a keyword, if so then return false
-            theName = table.get(0);
+            String theName = table.get(0);
             switch(theName) {
                 case "Name:":
                 case "Course slots:":
@@ -780,8 +781,8 @@ public class Input {
                         Course otherLab = _courseList.get(otherLabIndex); // retrieve reference to the instance
 
                         // now compare the tutorial section strings
-                        String newCourseLabSection = newCourse.SecondaryType == Course.SecondaryType.NONE ? newCourse._primarySection : newCourse._secondarySection;
-                        String otherLabLabSection = otherLab.SecondaryType == Course.SecondaryType.NONE ? otherLab._primarySection : otherLab._secondarySection;
+                        String newCourseLabSection = newCourse._secondaryType == Course.SecondaryType.NONE ? newCourse._primarySection : newCourse._secondarySection;
+                        String otherLabLabSection = otherLab._secondaryType == Course.SecondaryType.NONE ? otherLab._primarySection : otherLab._secondarySection;
 
                         if (newCourseLabSection.equals(otherLabLabSection)) {
                             System.out.println("ERROR: 2 different labs/tutorials of the same class cannot have the same lab number, " + otherLab._outputID + " & " + newCourse._outputID);
@@ -814,8 +815,8 @@ public class Input {
                         // set this newCourse not-compatible with every LEC in this list
                         for(int j = 0; j < sharedLecsList.size(); j++) {
                             int nextCourseIndex = sharedLecsList.get(j); // get index of next LEC in list
-                            _builtInNotCompats.add(new Pair<Integer,Integer>(hashIndex, nextCourseIndex));
-                            _builtInNotCompats.add(new Pair<Integer,Integer>(nextCourseIndex, hashIndex)); // for NC symmetry
+                            _builtInNotCompats.add(new AbstractMap.SimpleEntry<Integer,Integer>(hashIndex, nextCourseIndex));
+                            _builtInNotCompats.add(new AbstractMap.SimpleEntry<Integer,Integer>(nextCourseIndex, hashIndex)); // for NC symmetry
                             // then in postprocess, we can iterate through this list and set true in boolean area for each pair.
                         }
                     }
@@ -836,8 +837,8 @@ public class Input {
                             if (candidate._primarySection.equals(newCourse._primarySection)) { // e.g. if 02 == 02
                                 // we found the corresponding lecture section...
                                 candidateFound = true; // update flag to prevent error
-                                _builtInNotCompats.add(new Pair<Integer,Integer>(hashIndex, nextCourseIndex));
-                                _builtInNotCompats.add(new Pair<Integer,Integer>(nextCourseIndex, hashIndex)); // for NC symmetry
+                                _builtInNotCompats.add(new AbstractMap.SimpleEntry<Integer,Integer>(hashIndex, nextCourseIndex));
+                                _builtInNotCompats.add(new AbstractMap.SimpleEntry<Integer,Integer>(nextCourseIndex, hashIndex)); // for NC symmetry
                                 // then in postprocess, we can iterate through this list and set true in boolean area for each pair.
                             }
 
@@ -1282,7 +1283,7 @@ public class Input {
         }
 
         // 3. make sure courses and labs of same class are properly init as not-compatible according to specs (ex. have the sharedHashMap and use the sharedHaskkey to set this list right here)
-        for (Pair<Integer,Integer> pair : _builtInNotCompats) {
+        for (Map.Entry<Integer,Integer> pair : _builtInNotCompats) {
             int indexL = pair.getKey();
             int indexR = pair.getValue();
             _notCompatibles[indexL][indexR] = true;

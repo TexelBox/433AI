@@ -1845,6 +1845,10 @@ public class Input {
         int hashIndex = _mapSlotToIndex.size(); // thus the new index is the size of map. ex. it contains 3 slots already (0,1,2), now we want to put this 4th slot at index 3
         Slot newSlot = new Slot(hashIndex, day, startHourStr, startMinuteStr);
         newSlot._isCourseSlot = isCourseSlot;
+
+        // NOTE: this interval setter must go after setting _isCurseSlot
+        newSlot.setTimeIntervalNums();
+
         /*
         if (isCourseSlot) {
             newSlot._isCourseSlot = true;

@@ -53,9 +53,8 @@ public class Slot {
 
 
 
-
-    //private int _endHourNum;
-    //private int _endMinuteNum;
+    private int _startTimeInMinutes; // use this for slot overlap setting
+    private int _endTimeInMinutes;
 
     //public list of overlapping slots (need to set symmetrically)
 
@@ -205,9 +204,30 @@ public class Slot {
 
 
 
-    // ~~~~~~~~~~~~~~will call this after everything is init (at least after _isCourseSlot is set externally)
-    public void setEndTimeNums() {
+    // NOTE: will call this after everything is init (at least after _isCourseSlot is set externally)
+    public void setTimeIntervalNums() {
+        int deltaMinutes; // interval length from start time to end time
+        if (_isCourseSlot) { // is for lecture lengths
+            if (_day == Day.MO) { // monday lecture has length 1 hour 
+                deltaMinutes = 60;
+            }
+            else { // tuesday lecture has length 1.5 hours
+                deltaMinutes = 90;
+            }
+        } 
+        else { // is for lab lengths
+            if (_day == Day.MO || _day == Day.TU) { // both monday and tuesday labs are 1 hour
+                deltaMinutes = 60;
+            }
+            else { // friday labs are 2 hours
+                deltaMinutes = 120;
+            }
+        }
 
+        // now convert starttime hour + minute to just minutes then add 
+
+        _startTimeInMinutes = 60*_startHourNum + _startMinuteNum;
+        _endTimeInMinutes = _startTimeInMinutes + deltaMinutes;
     }
 
 
@@ -237,6 +257,8 @@ public class Slot {
     public boolean checkHardConstraints() {
         // get the course indices currently assigned to this slot
         // using these indices we then check over the data structures in Input class
+
+        // UPDATE ALL THIS STUFF FOR OVERLAPS~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         if (_lectureCount > _coursemax) {
             return false; // VIOLATION

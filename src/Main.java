@@ -14,9 +14,9 @@ public class Main {
 
             try {
                 Algorithm.pen_coursemin = Double.parseDouble(args[2]);
-                Algorthm.pen_labsmin = Double.parseDouble(args[3]);
+                Algorithm.pen_labsmin = Double.parseDouble(args[3]);
                 Algorithm.pen_notpaired = Double.parseDouble(args[4]);
-                Algortihm.pen_section = Double.parseDouble(args[5]);
+                Algorithm.pen_section = Double.parseDouble(args[5]);
                 Algorithm.w_minfilled = Double.parseDouble(args[6]);
                 Algorithm.w_pref = Double.parseDouble(args[7]);
                 Algorithm.w_pair = Double.parseDouble(args[8]);

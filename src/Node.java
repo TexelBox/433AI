@@ -1,7 +1,10 @@
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Node {
 
@@ -36,7 +39,7 @@ public class Node {
         _problem = problem;
         _sol = sol;
         _depth = depth;
-        _eval = eval;
+        //_eval = eval;
         _changedIndex = changedIndex;
         _remainingCoursesCount = remainingCoursesCount;
         _remainingLabsCount = remainingLabsCount;
@@ -54,6 +57,33 @@ public class Node {
             }
         }
     }
+
+
+    // ~~~~~~~~~~~~for now in the unoptimized form, i don't use the parent's eval and then add a deltaEval, I simply recalculate everything
+    // ~~~~~~~~~~~~I need to add a safety check, if one of the weights/pens is negative then we don't call setEval unless the problem is full (makes the search take longer but at least we don't lose valid/optimal solutions)
+    // trying to get something to work 
+    public void setEval() {
+        // calculate Eval(_problem)
+        double constructedEval = 0;
+        // iterate over _slotList and if the slot is in _assignedSlots then use the instance found in there. Otherwise, use the template found in _slotList
+        for (int index = 0; index < Input.getInstance._slotList.size(); index++) {
+            Slot nextSlot;
+            if (_assignedSlots.containsKey(index)) { // use assigned slot
+                nextSlot = _assignedSlots.get(index);
+            }
+            else { // use empty slot (template)
+                nextSlot = Input.getInstance()._slotList.get(index);
+            }
+
+            // now that we have our slot, get its eval and add to tally
+            constructedEval += nextSlot.getEval(this); // pass in this node
+        }
+
+        _eval = constructedEval;
+    }
+
+
+
 
 
 
@@ -92,5 +122,11 @@ public class Node {
     }
 
     // ~~~~~~~~~NOTE: when a node is closed, we could set it to null in order to free up memory (done with it), make sure to remove it from the leaves list
+
+
+
+
+
+
 
 }

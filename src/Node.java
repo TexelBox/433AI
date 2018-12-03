@@ -35,7 +35,10 @@ public class Node {
     public boolean _isFull = true; // assume its full until we prove it has a null
 
 
+    //private List<Node> _children = new ArrayList<Node>(); // init empty
 
+
+    // ONLY PASS IN -1 TO CHANGEINDEX WHEN WORKING WITH EMPTY NODE
     public Node(Slot[] problem, boolean sol, int depth, int changedIndex, int remainingCoursesCount, int remainingLabsCount) {
         _problem = problem;
         _sol = sol;
@@ -61,6 +64,14 @@ public class Node {
             }
         }
     }
+
+
+    /* use this in the future?
+    // return True if full (depth (#of non-$ / # of assigned courses) = problem vector length)
+    public boolean isFull() {
+        return _depth == _problem.length;
+    }
+    */
 
 
     // ~~~~~~~~~~~~for now in the unoptimized form, i don't use the parent's eval and then add a deltaEval, I simply recalculate everything
@@ -96,29 +107,54 @@ public class Node {
     }
 
 
+    // closing node means were done with it
     public void close() {
         _sol = true; // sol = 'yes'
     }
 
-    public void expand() {
+    public void expand(boolean doPartAssign, int partAssignChangedIndex) {
 
-        // 1. find leftmost null, which would be right of our last leftmost null (changedIndex)
+        // based on doPartAssign figure out which index in _problem we are changing
 
         int newChangedIndex = 0;
+        Slot forcedSlot = Input.getInstance()._partialAssignments[partAssignChangedIndex];
+        List<Slot> forcedSlotSingletonList = new ArrayList<Slot>();
+        forcedSlotSingletonList.add(forcedSlot);
 
-        for (int i = _changedIndex+1; i < _problem.length; i++) {
-            if (_problem[i] == null) {
-                newChangedIndex = i;
+        if (doPartAssign) {
+            newChangedIndex = partAssignChangedIndex;
+        }
+        else {
+            // 1. find leftmost null, which would be right of our last leftmost null (changedIndex)
+            for (int i = _changedIndex+1; i < _problem.length; i++) {
+                if (_problem[i] == null) {
+                    newChangedIndex = i;
+                }
             }
         }
+
 
         // 2. figure out how many children we have...
         // get if index is for a course or a lab then permute over proper list
 
         Course courseToAssign = Input.getInstance()._courseList.get(newChangedIndex);
         if (courseToAssign._isLecture) {
-            // use courseslotlist
-            for (Slot courseSlot : Input.getInstance()._courseSlotList) {
+
+            // NOTE: parser ensures that this slot is a course slot...
+
+            List<Slot> permutationList;
+
+            if (doPartAssign) {
+                permutationList = forcedSlotSingletonList;
+            }
+            else {
+                // use courseslotlist
+                permutationList = Input.getInstance()._courseSlotList; 
+            }
+
+
+
+            for (Slot courseSlot : permutationList) {
                 // create a single child
 
                 // deep copy our _problem
@@ -151,40 +187,128 @@ public class Node {
 
                 // get here with a deep copy problem of parent
 
-                // now overwrite the newChangedIndex entry with a different permutation
+                // now overwrite the newChangedIndex (leftmost null) entry with a different permutation
 
                 int courseSlotIndex = courseSlot._hashIndex;
 
-                Slot slotToCopy;
-
-                if (_assignedSlots.containsKey(courseSlotIndex)) {
-                    slotToCopy = _assignedSlots.get(courseSlotIndex);
+                Slot overwriteSlot;
+                if (_assignedSlotsCopies.containsKey(courseSlotIndex)) { // if we want to overwrite with a slot that already exists as a copy in our copy map...
+                    overwriteSlot = _assignedSlotsCopies.get(courseSlotIndex);
+                    overwriteSlot._courseIndices.add(newChangedIndex); // assign course into slot's course list
+                    overwriteSlot._lectureCount++; // increment lecture count
                 }
-                else {
-                    slotToCopy = courseSlot;
+                else { // map doesnt contain copy...
+                    Slot slotToCopy = courseSlot;
+                    overwriteSlot = new Slot(slotToCopy);
+                    overwriteSlot._courseIndices.add(newChangedIndex); // assign course into slot's course list
+                    overwriteSlot._lectureCount++; // increment lecture count
                 }
 
-                // deep copy this slotToCOpy and then replace the null with it.
+                newProblem[newChangedIndex] = overwriteSlot; 
 
+                // now we have the final problem to put in child node...
+
+
+                // create child node
+
+                Node nextChild = new Node(newProblem, false, _depth+1, newChangedIndex, _remainingCoursesCount-1, _remainingLabsCount);
+
+                AndTree._leaves.push(nextChild);
+                
             }
         }
         else { // is lab...
-            // use labslotlist
+
+            // NOTE: parser ensures that this slot is a lab slot...
+
+            List<Slot> permutationList;
+
+            if (doPartAssign) {
+                permutationList = forcedSlotSingletonList;
+            }
+            else {
+                // use labslotlist                
+                permutationList = Input.getInstance()._labSlotList; 
+            }
+
+
+            for (Slot labSlot : permutationList) {
+                
+                // create a single child
+
+                // deep copy our _problem
+
+                Slot[] newProblem = new Slot[_problem.length]; // problems will be same size
+
+                // now just deep copy non-null elements into same slot
+
+                for (int i = 0; i < _problem.length; i++) {
+                    Slot aSlot = _problem[i];
+                    if (aSlot != null) { 
+
+                        // overwrite null in newproblem with a deep copy of aSlot
+
+                        if (!_assignedSlotsCopies.containsKey(aSlot._hashIndex)) { // if map doesnt already contain this copy
+                            // deep copy from _assignSlots map (which happens to be same as reference in _problem)
+                            // use aSlot
+                            Slot newSlot = new Slot(aSlot); // deep copy aSlot
+                            newProblem[i] = newSlot;
+                            _assignedSlotsCopies.put(newSlot._hashIndex, newSlot);
+                        }
+                        else { // a copy sharing this slot index was already made and stored inside _assignedSlotCopies map
+                            // retrieve copy from copy map...
+                            Slot newSlot = _assignedSlotsCopies.get(aSlot._hashIndex);
+                            newProblem[i] = newSlot;
+                        }
+                        
+                    }
+                }
+
+                // get here with a deep copy problem of parent
+
+                // now overwrite the newChangedIndex (leftmost null) entry with a different permutation
+
+                int labSlotIndex = labSlot._hashIndex;
+
+                Slot overwriteSlot;
+                if (_assignedSlotsCopies.containsKey(labSlotIndex)) { // if we want to overwrite with a slot that already exists as a copy in our copy map...
+                    overwriteSlot = _assignedSlotsCopies.get(labSlotIndex);
+                    overwriteSlot._courseIndices.add(newChangedIndex); // assign lab into slot's course list
+                    overwriteSlot._labCount++; // increment lab count
+                }
+                else { // map doesnt contain copy...
+                    Slot slotToCopy = labSlot;
+                    overwriteSlot = new Slot(slotToCopy);
+                    overwriteSlot._courseIndices.add(newChangedIndex); // assign lab into slot's course list
+                    overwriteSlot._labCount++; // increment lab count
+                }
+
+                newProblem[newChangedIndex] = overwriteSlot; 
+
+                // now we have the final problem to put in child node...
+
+
+                // create child node
+
+                Node nextChild = new Node(newProblem, false, _depth+1, newChangedIndex, _remainingCoursesCount, _remainingLabsCount-1);
+
+
+                AndTree._leaves.push(nextChild);
+
+                
+            }
+
         }
         
-
-        //Node(Slot[] problem, boolean sol, int depth, int changedIndex, int remainingCoursesCount, int remainingLabsCount)
     }
 
-
-
-
-    
-
-
-
-
-
+    /*
+    public void pushChildren() {
+        for (Node child : _children) {
+            AndTree._leaves.push(child);
+        }
+    }
+    */
 
 
 }

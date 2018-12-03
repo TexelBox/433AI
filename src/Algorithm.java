@@ -32,7 +32,6 @@ public class Algorithm {
 
     public Algorithm() {
         _mainTree = new AndTree();
-        // call the trees init function
     }
 
     // must be called after statics are externally set...
@@ -42,8 +41,39 @@ public class Algorithm {
 
 
 
-
     public void processTree() { // work in here
+
+        // process partialassignments first
+
+        Slot[] partAssigns = Input.getInstance()._partialAssignments;
+
+        for (int partAssignChangedIndex = 0; partAssignChangedIndex < partAssigns.length; partAssignChangedIndex++) {
+            if (partAssigns[partAssignChangedIndex] != null) {
+                Node chosenLeaf = _mainTree.fLeaf();
+                _mainTree.fTrans(chosenLeaf, true, partAssignChangedIndex);
+            }
+            if (AndTree._leaves.isEmpty()) {
+                break;
+            }
+        }
+
+        // main stuff if partassign loop succeeded in generating 1 leaf (stack has size 1)
+        while (!AndTree._leaves.isEmpty()) { // while there are still leaves to process...
+
+            // then move onto rest of algorithm
+            Node chosenLeaf = _mainTree.fLeaf();
+            _mainTree.fTrans(chosenLeaf, false, -1);
+
+        }
+
+        if (_mainTree._foundValidAssign) {
+            // output to file (bestAssign sorted alphabetically)
+        }
+        else {
+            // output to file (NO VALID SOLUTION)
+            System.out.println("NO VALID SOLUTION");
+        }
+
 
     }
 

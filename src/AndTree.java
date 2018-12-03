@@ -36,7 +36,33 @@ public class AndTree {
         // do all the partassign checks here or maybe have the root be all NULL then we run another function to initialize the tree by expanding a chain 1 partassign at a time and checking hard cobstraints
         // NOTE: eval doesn't need to be calculated until we find our first best solution (optimization), have a flag in here to specify when to start
         //initRoot(); // this will run through partassign and generate 
+
+        initRoot();
     }
+
+
+    private void initRoot() {
+        Slot[] blankProblem = new Slot[Input.getInstance()._courseList.size()]; // init all nulls
+
+        int remainingCoursesCount = 0; // start at 0
+        int remainingLabsCount = 0;
+
+        List<Course> theCourseList = Input.getInstance()._courseList;
+        for (Course course : theCourseList) {
+            if (course._isLecture) {
+                remainingCoursesCount++;
+            }
+            else {
+                remainingLabsCount++;
+            }
+        }
+
+        Node root = new Node(blankProblem, false, 0, -1, remainingCoursesCount, remainingLabsCount);
+
+        _leaves.push(root);
+    }
+
+
 
 
 
@@ -115,15 +141,24 @@ public class AndTree {
         return _leaves.pop();
     }
 
+    // 5. f_leaf pops the leaf that we check next from the list of leaves.
+
     // 4. f_trans needs to be implemented inside the AndTree class (either close the leaf - this is changing sol to 'yes'; OR expand it). f_trans uses Constr and Eval to decide which option to go with.
     // Param: chosenLeaf - is the node returned by fLeaf()
-    public void fTrans(Node chosenLeaf) {
+    public void fTrans(Node chosenLeaf, boolean doPartAssign, int partAssignChangedIndex) {
+
+        if (chosenLeaf._changedIndex == -1) {
+            chosenLeaf.expand(doPartAssign, partAssignChangedIndex);           
+        }
+
 
         boolean allHardConsSatisfied = chosenLeaf.checkHardConstraints();
 
         // CHECK VALIDITY...
         if (!allHardConsSatisfied) {
             // close node unfavorably (violation) - don't need to compare to best
+            chosenLeaf.close();
+            return;
         }
 
         // get here and no HCs are violated
@@ -153,6 +188,7 @@ public class AndTree {
 
             if (theEval < _bestEval) {
                 // expand node
+                chosenLeaf.expand(doPartAssign, partAssignChangedIndex);
             }
             else {
                 // close node without updating best
@@ -169,13 +205,9 @@ public class AndTree {
         }
         else { // if we haven't found a valid and not full
             // expand node - nothing to comapre to
+            chosenLeaf.expand(doPartAssign, partAssignChangedIndex);
         }
 
-
-        // 5. after f_trans, we remove the leaf (whether it's closed or not) from the list of leaves.
-        _leaves.pop(); // done with this node
-
- 
     }
 
 

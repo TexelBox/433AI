@@ -27,6 +27,7 @@ public class Main {
                 return;
             }
             
+            Algorithm.setNegativeWeightOrPenalty();
 
             boolean errorOccurred = false;
 

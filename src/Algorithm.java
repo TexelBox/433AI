@@ -24,12 +24,7 @@ public class Algorithm {
     public static double w_pair;
     public static double w_secdiff;
 
-
-
-
-
-
-
+    public static boolean _isNegWeightOrPenalty; // true if at least one is negative
 
     AndTree _mainTree;
 
@@ -39,6 +34,14 @@ public class Algorithm {
         _mainTree = new AndTree();
         // call the trees init function
     }
+
+    // must be called after statics are externally set...
+    public static void setNegativeWeightOrPenalty() {
+        _isNegWeightOrPenalty = (pen_coursemin < 0 || pen_labsmin < 0 || pen_notpaired < 0 || pen_section < 0 || w_minfilled < 0 || w_pref < 0 || w_pair < 0 || w_secdiff < 0);
+    }
+
+
+
 
     public void processTree() { // work in here
 

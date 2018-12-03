@@ -319,8 +319,6 @@ public class Slot {
         // get the course indices currently assigned to this slot
         // using these indices we then check over the data structures in Input class
 
-        // UPDATE ALL THIS STUFF FOR OVERLAPS~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
         if (_lectureCount > _coursemax) {
             return false; // VIOLATION
         }

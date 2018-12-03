@@ -1,4 +1,24 @@
 
+/*
+
+THIS WILL WORK! i hope...
+
+init root by applying the same algorithm 1 by one (that way i can use same functions)
+
+init node as <NULL, ...., NULL> // all nulls, push into leaves (now we have 1 leaf)
+
+for (lenggth of non nulls in partassignments) {
+	take leaf and change the problem index corresponding to next partassign to create a new child node,
+	we pop off the old leaf and we push this new leaf (now we have 1 leaf)	
+}
+
+after all this we have 1 leaf which we can call the root, but it will have a depth of #of nonnulls in partassign
+
+
+*/
+
+// NOTE: the way we keep track of courses that are already assigned is by looking at the problem vector to see if its a null or not...
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +49,17 @@ public class AndTree {
     // will basically be running the algorithm without fLeaf and fTrans here, since we want to hard code control of what to use next.
     private void initRoot() {
 
-        //Slot[] blankProb = new Slot[Input.getInstance()._courseList.size()]; // all NULLs
+        // we want our root problem to look like Input.getInstance()._partialAssignments
+        // so we need to take that array right there and deep copy it to get our problem
+        // we then call variant function of checkHardconstarints to check over every cell in thus problem
+        // if no hard cons violated, we then call variant function of getEval which works over entire problem
+        // we set eval to this, sol to false, changedIndex to -1 (means we dont have to check this node at all)
+        // then set root to this new node and then begin search
+        // ~~~~~~~~~~~~ACTUALLY it would be beneficial to set the depth = number of non-nulls in array, so that I can subtract TotalNumberOfCourses/Labs - labcount/leccount and if this difference is < coursemin/coursemax - leccount/labcount then I can add this part of the Eval and flip the flag (to say dont add this again)
+
+
+
+        //Slot[] problem = new Slot[Input.getInstance()._courseList.size()]; // all NULLs
         //boolean sol = false; // start with sol = ?
         //int depth = 0;
         //double eval = 0;

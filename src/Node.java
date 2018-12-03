@@ -11,7 +11,7 @@ public class Node {
     //public Node _parent; // may not be necessary (no backtracking)
     //public List<Node> _children = new ArrayList<Node>(); // may not be necessary (too much memory), could put in AndTree~~~~~~~~~~~~~
 
-    // NOTE: don't use the depth as the number of NON-NULL entries (it wont be since we init with partassign)
+    // ~~~~ensure that the depth always equals the number of courses that have been assigned in this problem.
     public int _depth; // depth 0 = root
 
     public double _eval; // eval of _problem (assignment), _eval = parent._eval + deltaEval
@@ -19,16 +19,27 @@ public class Node {
     public int _changedIndex; // which index in parent's _problem was assigned a slot to become this _problem
 
 
+    public int _remainingCoursesCount;
+    public int _remainingLabsCount;
+
+
 
     public Map<Integer,Slot> _assignedSlots = new HashMap<Integer,Slot>();
 
+    public Set<Integer> _courseIndicesAlreadyCheckedForByPair = new HashSet<Integer>(); // init empty, don't need to pass on to children
 
-    public Node(Slot[] problem, boolean sol, int depth, double eval, int changedIndex) {
+    public Set<Integer> _courseIndicesAlreadyCheckedForBySecdiff = new HashSet<Integer>(); // init empty, don't need to pass on to children
+
+
+
+    public Node(Slot[] problem, boolean sol, int depth, double eval, int changedIndex, int remainingCoursesCount, int remainingLabsCount) {
         _problem = problem;
         _sol = sol;
         _depth = depth;
         _eval = eval;
         _changedIndex = changedIndex;
+        _remainingCoursesCount = remainingCoursesCount;
+        _remainingLabsCount = remainingLabsCount;
         setAssignedSlots();
     }
 

@@ -52,7 +52,7 @@ public class Slot {
     public Set<Integer> _overlaps = new HashSet<Integer>(); // the set of slot indices that this slot overlaps (not including itself)
 
     // algorithm stuff...
-    public List<Integer> _courseIndices = new ArrayList<Integer>(); // current indices of courses assigned to this slot
+    public List<Integer> _courseIndices = new ArrayList<Integer>(); // current indices of courses (lecs+labs) assigned to this slot
     public int _lectureCount = 0; // number of lectures in _courseIndices 
     public int _labCount = 0; // number of labs/tuts in _courseIndices
 
@@ -384,5 +384,182 @@ public class Slot {
 
         return true;
     }
+
+
+
+    private double getEvalMinfilled(Node node) {
+
+        double evalMinfilled;
+
+        if (_isCourseSlot) { // if this is a course slot... (only need to consider coursemax/min)
+            // calculate the max number of courses that could be assigned to this slot in the future...
+            int maxPossibleLecCount = _lectureCount + node._remainingCoursesCount; // assume we could add all remaining unassigned courses into this slot
+            // now calculate the difference between this max and our coursemin
+            int diff = _coursemin - maxPossibleLecCount;
+            if (diff > 0) { // for every course under the min, we add pen_coursemin
+                evalMinfilled = diff * Algorithm.pen_coursemin;
+            }
+            else {
+                evalMinfilled = 0;
+            }
+        }
+        else { // if this is a lab slot... (only need to consider labmax/min)
+            // calculate the max number of labs that could be assigned to this slot in the future...
+            int maxPossibleLabCount = _labCount + node._remainingLabsCount; // assume we could add all remaining unassigned labs into this slot
+            // now calculate the difference between this max and our labmin
+            int diff = _labmin - maxPossibleLabCount;
+            if (diff > 0) { // for every lab under the min, we add pen_labsmin
+                evalMinfilled = diff * Algorithm.pen_labsmin;
+            }
+            else {
+                evalMinfilled = 0;
+            }
+        }
+
+        return evalMinfilled;
+    }
+
+
+    private int getEvalPref(Node node) {
+
+        int evalPref = 0;
+
+        for (int i = 0; i < Input.getInstance()._courseList.size(); i++) { // loop through all courses
+            // i is the next courseIndex
+            // only add to evalPref if the course is 1) ASSIGNED and 2) ASSIGNED TO ANOTHER SLOT
+            int nextPref = Input.getInstance()._preferences[i][_hashIndex]; // lookup value stored in table
+
+            // check if we should add it...
+
+            if (_courseIndices.contains(i)) { // if this course is assigned to this slot, then we don't want to add this penalty
+                continue;
+            }
+
+            // get here if this course isn't assigned to this slot
+
+            // so 2 possibilities:
+            // 1. course isnt assigned to any slot yet (so we can ignore penalty for now, since its possible it could be added in future)
+
+            if (node._problem[i] == null) { // unassigned course
+                continue;
+            }
+
+            // get here and we know that this course is assigned to a slot that isn't this one, so we now add the penalty...
+            evalPref += nextPref;
+        }
+
+        return evalPref;
+    }
+
+    private double getEvalPair(Node node) { 
+
+        double evalPair = 0;
+
+        // loop over _courseIndices,
+        // we have an index, which we can look up its row in _pairs
+        // if the entry is TRUE, then we check if that paired index is assigned yet...
+        // if it is ASSIGNED to a DIFFERENT slot, then we add pen_notpaired, and then we can can flag this index as checked (only flag the left index as checked), that way when it becomes the right index in another slot's function, we ignore it
+
+        for (int nextCourseIndex : _courseIndices) { // for each class stored in this slot...
+            for (int otherIndex = 0; otherIndex < Input.getInstance()._courseList.size(); otherIndex++) {
+
+                if (node._courseIndicesAlreadyCheckedForByPair.contains(otherIndex)) { // if this index was already check as a previous nextCourseIndex (either in this slot or other slots)...
+                    continue; // skip it (prevent symmetry causing 2*penalty)
+                }
+
+                if (Input.getInstance()._pairs[nextCourseIndex][otherIndex]) { // if we expect these 2 to be paired up...
+
+                    if (_courseIndices.contains(otherIndex)) { // if both courses are assigned to this slot (paired up), then we don't want to add this penalty
+                        continue;
+                    }
+
+                    // get here if othercourse isn't assigned to this slot
+                    // 2 cases, either not assigned at all (don't add penalty yet) or assigned to a different slot (now we can add penalty)
+
+                    if (node._problem[otherIndex] == null) { // unassigned course
+                        continue;
+                    }
+
+                    // get here and we know that this other course is assigned to a slot that isn't this one, so we now add the penalty...
+                    evalPair += Algorithm.pen_notpaired;
+                }
+            }
+
+            node._courseIndicesAlreadyCheckedForByPair.add(nextCourseIndex); // flag that we have already checked all the pairs containing this course (don't check again and add penalty again!)
+        }
+
+        return evalPair;
+    }
+
+    private double getEvalSecdiff(Node node) {
+
+        double evalSecdiff = 0;
+
+        // here we apply a "soft" not-compatible for lecs of same class 
+        // we need to check in this slot and in overlapslot, how many pairs of sections do we have...
+        // multiply this number by pen_secdiff to get return value
+
+        // check every pair in this slot directly
+        // no need to check if not in hashset because they won't be since they're in this slot only
+        for (int i = 0; i < _courseIndices.size() - 1; i++) {
+            int sameSlotCourseIndexI = _courseIndices.get(i);
+            for (int j = i+1; j < _courseIndices.size(); j++) {
+                int sameSlotCourseIndexJ = _courseIndices.get(j);
+                // this only applies to LECs of same class (thus both isLecture and sharedhashkeys are equal)
+                Course sameSlotCourseI = Input.getInstance()._courseList.get(sameSlotCourseIndexI);
+                Course sameSlotCourseJ = Input.getInstance()._courseList.get(sameSlotCourseIndexJ);
+                if (sameSlotCourseI._isLecture && sameSlotCourseJ._isLecture) {
+                    if (sameSlotCourseI._sharedHashKey.equals(sameSlotCourseJ._sharedHashKey)) {
+                        evalSecdiff += Algorithm.pen_section;
+                    }
+                }
+            }
+        }
+
+        // now check each sameslotindex w/ each index in overlap slots
+        // then afterwards make sure to add every index in _courseIndices into the hashset to prevent duplicate pairs from counting in future slots who reference this
+
+        for (int sameSlotCourseIndex : _courseIndices) {
+            for (int overlapSlotIndex : _overlaps) {
+                if (node._assignedSlots.containsKey(overlapSlotIndex)) { // if this slot has been assigned to at least 1 course (it won't be in this map if it has 0)
+                    Slot overlapSlot = node._assignedSlots.get(overlapSlotIndex);
+                    for (int overlapSlotCourseIndex : overlapSlot._courseIndices) {
+                        // now we got our 2 course indices: sameSlotCourseIndex and overlapSlotCourseIndex
+                        // check that we haven't already looked at this pair before (with overlapSlotCourseIndex as the leftIndex)
+                        if (node._courseIndicesAlreadyCheckedForBySecdiff.contains(overlapSlotCourseIndex)) {
+                            continue;
+                        }
+                        // get here if this is first time checking this pair
+
+                        // this only applies to LECs of same class (thus both isLecture and sharedhashkeys are equal)
+                        Course sameSlotCourse = Input.getInstance()._courseList.get(sameSlotCourseIndex);
+                        Course overlapSlotCourse = Input.getInstance()._courseList.get(overlapSlotCourseIndex);
+                        if (sameSlotCourse._isLecture && overlapSlotCourse._isLecture) {
+                            if (sameSlotCourse._sharedHashKey.equals(overlapSlotCourse._sharedHashKey)) {
+                                evalSecdiff += Algorithm.pen_section;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // at end, we flag course as checked for future by putting in in hashset
+            node._courseIndicesAlreadyCheckedForBySecdiff.add(sameSlotCourseIndex);
+        }
+
+        return evalSecdiff;
+    }
+
+    public double getEval(Node node) {
+        double evalMinfilled = getEvalMinfilled(node);
+        int evalPref = getEvalPref(node);
+        double evalPair = getEvalPair(node);
+        double evalSecdiff = getEvalSecdiff(node); 
+
+        double eval = evalMinfilled * Algorithm.w_minfilled + evalPref * Algorithm.w_pref + evalPair * Algorithm.w_pair + evalSecdiff * Algorithm.w_secdiff;
+
+        return eval;
+    } 
+
 
 }

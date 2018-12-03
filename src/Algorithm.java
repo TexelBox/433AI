@@ -1,9 +1,35 @@
 
 
+// NOTE: for getting eval of current problme, we need to use paren'ts eval + deltaEval that would occur due to this new change + indirect changes like reducing remaining pool
+// whenever we need to reference to slots that have at least 1 class in them, we use the hashmap
+// whenever we need reference to slots that have 0 classes in them, we use the _courselotslist and _labslotslist
+// what we can do is everytime we eval we have to check over every single slot in both of these lists, get their hasindex, if they are in map use the map version, otherwise stick to the default template version in the list
+// we can look for deltaeval here, where 
+// i can write 2 functions, getTotalEval(Slot) nad getDeltaEval(Slot)
+
+
 
 public class Algorithm {
 
     // fields...
+
+    // main.java will set the 4 penalties and 4 weights here
+    public static double pen_coursemin; // only add these 2 min penalties when remaining course/lab count would result in this being below (then every level this increases because the available pool gets smaller)
+    public static double pen_labsmin;
+    public static double pen_notpaired;
+    public static double pen_section;
+
+    public static double w_minfilled;
+    public static double w_pref;
+    public static double w_pair;
+    public static double w_secdiff;
+
+
+
+
+
+
+
 
     AndTree _mainTree;
 

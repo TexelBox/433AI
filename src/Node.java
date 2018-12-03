@@ -1,21 +1,56 @@
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Node {
 
-    public Slot[] _problem; 
-    //public List<Slot> _problem = new ArrayList<Node>(); // only differs from its parent by one slot (leftmost null was changed)
+    public Slot[] _problem; // only differs from its parent by one slot (leftmost null was changed in current plan)
     public boolean _sol; // false = ?, true = 'yes'
 
-    public Node _parent; // may not be necessary (no backtracking)
-    public List<Node> _children = new ArrayList<Node>(); // may not be necessary (too much memory), could put in AndTree~~~~~~~~~~~~~
+    //public Node _parent; // may not be necessary (no backtracking)
+    //public List<Node> _children = new ArrayList<Node>(); // may not be necessary (too much memory), could put in AndTree~~~~~~~~~~~~~
 
+    // NOTE: don't use the depth as the number of NON-NULL entries (it wont be since we init with partassign)
     public int _depth; // depth 0 = root
 
-    public double _eval; // eval of _problem (assignment)
+    public double _eval; // eval of _problem (assignment), _eval = parent._eval + deltaEval
+
+    public int _changedIndex; // which index in parent's _problem was assigned a slot to become this _problem
+
+
+
+    public Map<Integer,Slot> _assignedSlots = new HashMap<Integer,Slot>();
+
+
+    public Node(Slot[] problem, boolean sol, int depth, double eval, int changedIndex) {
+        _problem = problem;
+        _sol = sol;
+        _depth = depth;
+        _eval = eval;
+        _changedIndex = changedIndex;
+        setAssignedSlots();
+    }
+
+
+    private void setAssignedSlots() {
+        for (Slot slot : _problem) {
+            if (slot != null) {
+                int key = slot._hashIndex;
+                if (!_assignedSlots.containsKey(key)) { // if we didn't already put this slot in map... (prevent redundant putting)
+                    _assignedSlots.put(key, slot);
+                }
+            }
+        }
+    }
+
+
 
     public void expandNode() {
+        // 7. If you choose to expand the leaf, choose the leftmost NULL/$ in the problem vector of our chosen leaf; and change the dollarsign to each possible slot and get n new leaves. 
+        // Once we expand the chosen leaf and get the children leaves, first we add the children to the list of leaves, and we go back to f_leaf and loop.
+
+
         // 1. find leftmost null in _problem
         // 2. foreach possible slot, create a new child node (child problem = parent problem (deep copy) but with leftmost null replaced by this possible slot), 
         // sol = ?, set parent to this, set this.children to this new child node), depth = this.depth + 1

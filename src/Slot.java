@@ -1,5 +1,5 @@
 
-// ~~~~~~then have the ending time be based on the day? (is it also based on the type of course assigned to it?)
+
 
 // NOTE: must have H:MM or HH:MM, 
 // 0:00 == 00:00
@@ -28,9 +28,6 @@ public class Slot {
     public int _startHourNum;
     public int _startMinuteNum;
 
-    //public int _startHour;
-    //public int _startMinute;
-
     public int _coursemax = 0; // ~~~~~~~~~~~~~~~~~~~~~~~~~~~THESE 4 get set externally~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     public int _coursemin = 0;
     public int _labmax = 0;
@@ -40,29 +37,19 @@ public class Slot {
 
     public boolean _isCourseSlot; // if false then its a labslot ~~~~~~~~~~~~~~~~set externally
 
-    //public boolean _isCourseSlot = false; // set true if this slot was found under CourseSlot header, ~~~~~~~~~~~~~~~~~~~these 2 are SET EXTERNALLY~~~~~~~~~~~~~~~~~~~~~~
-    //public boolean _isLabSlot = false; // set true if this slot was found under LabSlot header 
-
     public String _outputID; // e.g. MO, 10:00
 
     public String _courseSlotHashKey;
     public String _labSlotHashKey;
 
 
-    //public String _hashKey; // for lookup of its index in hashmap, init this when we construct this object and push its key/value pair into hashmap
-
-
 
     private int _startTimeInMinutes; // use this for slot overlap setting
     private int _endTimeInMinutes;
 
-    //public list of overlapping slots (need to set symmetrically)
+
 
     public Set<Integer> _overlaps = new HashSet<Integer>(); // the set of slot indices that this slot overlaps (not including itself)
-
-
-
-
 
     // algorithm stuff...
     public List<Integer> _courseIndices = new ArrayList<Integer>(); // current indices of courses assigned to this slot
@@ -83,6 +70,42 @@ public class Slot {
         setEveningFlag();
         setOutputID();
         setHashKeys();
+    }
+
+
+    // copy constructor...
+    public Slot(Slot slot) {
+        this._hashIndex = slot._hashIndex;
+        this._day = slot._day; // pass ref by val (doesn't matter, never changes)
+        this._startHourStr = slot._startHourStr; // pass ref by val (doesn't matter, never changes)
+        this._startMinuteStr = slot._startMinuteStr; // pass ref by val (doesn't matter, never changes)
+        this._startHourNum = slot._startHourNum;
+        this._startMinuteNum = slot._startMinuteNum;
+        this._coursemax = slot._coursemax;
+        this._coursemin = slot._coursemin;
+        this._labmax = slot._labmax;
+        this._labmin = slot._labmin;
+        this._isEveningSlot = slot._isEveningSlot;
+        this._isCourseSlot = slot._isCourseSlot;
+        this._outputID = slot._outputID; // pass ref by val (doesn't matter, never changes)
+        this._courseSlotHashKey = slot._courseSlotHashKey; // pass ref by val (doesn't matter, never changes)
+        this._labSlotHashKey = slot._labSlotHashKey; // pass ref by val (doesn't matter, never changes)
+        this._startTimeInMinutes = slot._startTimeInMinutes;
+        this._endTimeInMinutes = slot._endTimeInMinutes;
+        this._overlaps = slot._overlaps; // pass ref by val (doesn't matter, never changes)
+    
+
+
+        // stuff below is intented to get overwritten after call to this constructor.
+        List<Integer> template = slot._courseIndices; // get reference to it
+        List<Integer> clone = new ArrayList<Integer>(template.size());
+        for (int index : template) {
+            clone.add(index);
+        } 
+        this._courseIndices = clone; // pass deep copy of it
+
+        this._lectureCount = slot._lectureCount;
+        this._labCount = slot._labCount;
     }
 
 
@@ -286,11 +309,13 @@ public class Slot {
 
 
 
-    
 
+
+    // algorithm will call this after this slot has been assigned to the next course in problem vector (updating _courseIndices, lecCount, and labCOunt)
     // return True if no hard constraints are violated
     // this is the slot that has just been changed
-    public boolean checkHardConstraints() {
+    // Param node - is the focused on node at the moment
+    public boolean checkHardConstraints(Node node) {
         // get the course indices currently assigned to this slot
         // using these indices we then check over the data structures in Input class
 
@@ -304,40 +329,58 @@ public class Slot {
             return false; // VIOLATION
         }
 
-        // check each pair of indices...
-        for (int i = 0; i < _courseIndices.size() - 1; i++) {
-            for (int j = i + 1; j < _courseIndices.size(); j++) {
-                if (Input.getInstance()._notCompatibles[i][j]) {
+        // get the list of course indices currently assigned to each overlapping slot...
+        // NOTE: there won't be any duplicates since a course can't be assigned to multiple slots at once, thus we can use a list
+
+        // compare the changedIndex (which is the new index added to _courseIndices) with the other indices in _courseIndices and also with the overlapped indices
+
+        int changedIndex = node._changedIndex; // WE ONLY HAVE TO CHECK THIS CHANGE (added 1 course to this slot by the expansion)
+
+        // check inside this slot...
+        for (int sameSlotCourseIndex : _courseIndices) { 
+            if (sameSlotCourseIndex != changedIndex) { // have to ignore comparison with itself
+                if (Input.getInstance()._notCompatibles[changedIndex][sameSlotCourseIndex]) { // check not-compat
                     return false; // VIOLATION
                 }
 
-                if (Input.getInstance()._courseList.get(i)._is500Course && Input.getInstance()._courseList.get(j)._is500Course) { // 2 500-lvl LECS assigned to same slot
+                if (Input.getInstance()._courseList.get(changedIndex)._is500Course && Input.getInstance()._courseList.get(sameSlotCourseIndex)._is500Course) { // 2 500-lvl LECS overlapping
                     return false; // VIOLATION
                 }
-
-            }    
-
+            }
         }
 
-        // no need to check partassign constraint since it will be true by default if the preprocessing worked correctly (already did the check)
+        // now check inside overlapping slots...
 
-        // check each index...
-        for (int i = 0; i < _courseIndices.size(); i++) {
-            if (Input.getInstance()._unwanteds[i][_hashIndex]) {
-                return false; // VIOLATION
+        for (int overlapSlotIndex : _overlaps) { // for each overlapped slot...
+            if (node._assignedSlots.containsKey(overlapSlotIndex)) { // if this overlap slot was assigned to at least 1 course in current problem...
+                Slot overlapSlot = node._assignedSlots.get(overlapSlotIndex);
+                for (int overlapSlotCourseIndex : overlapSlot._courseIndices) { // for each overlapping course in this overlap slot...
+                    if (Input.getInstance()._notCompatibles[changedIndex][overlapSlotCourseIndex]) { // check not-compat
+                        return false; // VIOLATION
+                    }
+    
+                    if (Input.getInstance()._courseList.get(changedIndex)._is500Course && Input.getInstance()._courseList.get(overlapSlotCourseIndex)._is500Course) { // 2 500-lvl LECS overlapping
+                        return false; // VIOLATION
+                    }
+                }
             }
-
-            if (Input.getInstance()._courseList.get(i)._isEveningCourse && !_isEveningSlot) { // an evening course not assigned to an evening slot
-                return false; // VIOLATION
-            }
-
         }
 
-        // ~~~~~~~~~~~~~~~~ STILL need to have no course (is it only lecs?) that can't be assign to slot TU 11:00 - 12:30, this should be handled automatically by coursemax
+        // NOTE: no need to check partassign constraint since it will be true by default if the preprocessing worked correctly (already did the check for setting the root)
 
-        // ~~~~~~~~~~~~~~~~~ ALSO NEED to implement checking over slots that have their interval intersect with this slot we are testing (maybe Slot has a list of overlapping slots?)
+        // UNWANTED CHECK - only have to check within this slot (no overlaps)
+        // unwanted(a,s) means that we can't assign class a to the slot s (defined by its day and start time and slot type)
 
-        // NOTE: for 813 and 913 (if present), make sure they get initialized as Evening classes (actually this doesnt matter since technically they arent evening classes and the conditional doesnt apply)and are partassigned to TU 18:00 and Input preprocessed it so that they are not-compatible recursively with 313 or 413 and their not-compats,
+        if (Input.getInstance()._unwanteds[changedIndex][_hashIndex]) { // if our new course can't be assigned to this slot...
+            return false; // VIOLATION
+        }
+
+
+        // EVENING CHECK
+        // an evening course (lecture) must be assigned to an evening slot
+        if (Input.getInstance()._courseList.get(changedIndex)._isEveningCourse && !_isEveningSlot) { // if our newcourse is an evening course and this slot is not an evening slot...
+            return false; // VIOLATION
+        }
 
         return true;
     }

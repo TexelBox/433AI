@@ -1,0 +1,36 @@
+Name:
+TooManyLabsInput
+
+Course Slots:
+MO, 10:00, 2, 0
+TU, 6:00, 2, 0
+TU, 18:00, 2, 0
+
+Lab Slots:
+MO, 10:00, 1, 1
+TU, 12:00, 1, 1
+FR, 15:00, 2, 1
+
+Courses:
+CPSC 433 LEC 01
+CPSC 329 LEC 01
+CPSC 329 LEC 02
+CPSC 527 LEC 01
+
+Labs:
+CPSC 433 TUT 01
+CPSC 433 TUT 02
+CPSC 329 LEC 01 TUT 01
+CPSC 329 LEC 02 TUT 02
+CPSC 527 LEC 01 TUT 01
+
+Not Compatible:
+
+Unwanted:
+
+Preferences:
+MO, 10:00, CPSC 433 LEC 01, 10
+
+Pair:
+
+Partial Assignments:

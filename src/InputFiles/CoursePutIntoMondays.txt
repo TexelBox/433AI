@@ -1,0 +1,24 @@
+Name:
+UnwantedViolated
+
+Course slots:
+MO, 10:00, 1, 0
+
+Lab slots:
+FR, 10:00, 1, 0
+
+Courses:
+CPSC 433 LEC 01
+
+Labs:
+CPSC 433 LEC 01 TUT 01
+
+Not compatible:
+
+Unwanted:
+
+Preferences:
+
+Pair:
+
+Partial assignments:

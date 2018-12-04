@@ -1,0 +1,26 @@
+Name:
+Tuesdays1100to1230
+
+Course slots:
+TU, 11:00, 1, 0
+TU, 12:00, 1, 0
+
+Lab slots:
+TU, 12:00, 1, 0
+
+Courses:
+CPSC 416 LEC 01
+CPSC 418 LEC 01
+
+Labs:
+CPSC 418 TUT 01
+
+Not compatible:
+
+Unwanted:
+
+Preferences:
+
+Pair:
+
+Partial assignments:

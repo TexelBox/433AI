@@ -1,0 +1,24 @@
+Name:
+EveningClass
+
+Course slots:
+MO, 19:00, 2, 0
+TU, 8:00, 1, 0
+
+Lab slots:
+
+Courses:
+CPSC 916 LEC 01
+CPSC 918 LEC 01
+
+Labs:
+
+Not compatible:
+
+Unwanted:
+
+Preferences:
+
+Pair:
+
+Partial assignments:

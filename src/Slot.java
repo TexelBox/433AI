@@ -51,6 +51,9 @@ public class Slot {
 
     public Set<Integer> _overlaps = new HashSet<Integer>(); // the set of slot indices that this slot overlaps (not including itself)
 
+    public int _twinSlotIndex; // index of the slot that starts at the same time as this slot if there is one...
+    public boolean _hasTwin = false;
+
     // algorithm stuff...
     public List<Integer> _courseIndices = new ArrayList<Integer>(); // current indices of courses (lecs+labs) assigned to this slot
     public int _lectureCount = 0; // number of lectures in _courseIndices 
@@ -260,6 +263,18 @@ public class Slot {
     }
 
 
+    public static boolean checkForTwin(Slot slot1, Slot slot2) {
+
+        if (slot1._startTimeInMinutes == slot2._startTimeInMinutes && slot1._endTimeInMinutes == slot2._endTimeInMinutes) { // if the 2 slots start at the same time...
+            if (slot1._day == slot2._day) { // if they are on the same day (and time overlaps), theres an overlap
+                return true;
+            }
+        }
+        
+        return false;
+
+    }
+
 
     // this static function will be used by the post-process() of the parser ONLY to check if 2 slots overlap
     // then the parser will update the overlap sets for each slot symmetrically if they do overlap
@@ -449,6 +464,7 @@ public class Slot {
         return evalPref;
     }
 
+    // penalty if 2 paired courses/labs aren't assigned to same day and start time and end time
     private double getEvalPair(Node node) { 
 
         double evalPair = 0;
@@ -471,7 +487,23 @@ public class Slot {
                         continue;
                     }
 
-                    // get here if othercourse isn't assigned to this slot
+                    if (_hasTwin) {
+                        Slot twinSlot;
+                        if (node._assignedSlots.containsKey(_twinSlotIndex)) { // if in our map..
+                            twinSlot = node._assignedSlots.get(_twinSlotIndex); // get from map if there is one
+                        }
+                        else { // if not in map (not assigned to any course yet)
+                            // get the template from _slotList
+                            twinSlot = Input.getInstance()._slotList.get(_twinSlotIndex);
+                        }
+
+                        if (twinSlot._courseIndices.contains(otherIndex)) {
+                            continue;
+                        }
+                    }
+                    
+
+                    // get here if othercourse isn't assigned to this slot (or its twin slot if it has one)
                     // 2 cases, either not assigned at all (don't add penalty yet) or assigned to a different slot (now we can add penalty)
 
                     if (node._problem[otherIndex] == null) { // unassigned course

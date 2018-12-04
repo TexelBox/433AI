@@ -1507,6 +1507,15 @@ public class Input {
                     // add slot1 index to slot2's set
                     slot2._overlaps.add(i);
                 }
+
+                if (Slot.checkForTwin(slot1, slot2)) { // if these 2 slots are twins (start at same time & same day, one is lecslot one is labslot)
+                    slot1._twinSlotIndex = slot2._hashIndex; // flag both as twins
+                    slot1._hasTwin = true;
+                    slot2._twinSlotIndex = slot1._hashIndex;
+                    slot2._hasTwin = true;
+                }
+
+
             }
         }
 

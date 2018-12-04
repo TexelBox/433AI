@@ -1,15 +1,14 @@
 Name:
-WrongKeyWords4
+UnwantedViolated
 
 Course slots:
-MO, 8:00, 3, 2
+MO, 10:00, 1, 0
 
 Lab slots:
-FR, 10:00, 1, 1
+FR, 10:00, 1, 0
 
-C ourses:
+Courses:
 CPSC 433 LEC 01
-CPSC 433 LEC 02
 
 Labs:
 CPSC 433 LEC 01 TUT 01

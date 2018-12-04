@@ -1,19 +1,17 @@
 Name:
-TooManyLabsPerSlot
+CourseAndLabAssignedToSameSlot
 
 Course slots:
 MO, 8:00, 1, 1
 
 Lab slots:
 MO, 8:00, 1, 1
-TU, 9:00, 1, 1
 
 Courses:
 CPSC 433 LEC 01
 
 Labs:
-CPSC 433 LEC 01 TUT 01
-CPSC 433 LEC  01 LAB   02
+CPSC 433 TUT 01
 
 Not compatible:
 
@@ -24,5 +22,5 @@ Preferences:
 Pair:
 
 Partial assignments:
-CPSC 433 LEC 01 TUT 01, TU, 9:00
-CPSC 433 LEC 01 LAB 02, TU, 9:00
+CPSC 433 LEC 01, MO, 8:00
+CPSC 433 TUT 01, MO, 8:00

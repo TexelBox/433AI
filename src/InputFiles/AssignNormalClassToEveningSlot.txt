@@ -1,18 +1,15 @@
 Name:
-WrongKeyWords4
+AssignNormalClassToEveningSlot
 
 Course slots:
-MO, 8:00, 3, 2
+TU, 18:30, 1, 0
 
 Lab slots:
-FR, 10:00, 1, 1
 
-C ourses:
-CPSC 433 LEC 01
-CPSC 433 LEC 02
+Courses:
+CPSC 333 LEC 01
 
 Labs:
-CPSC 433 LEC 01 TUT 01
 
 Not compatible:
 

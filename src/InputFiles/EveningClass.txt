@@ -1,18 +1,17 @@
 Name:
-WrongKeyWords4
+EveningClass
 
 Course slots:
-MO, 8:00, 3, 2
+MO, 19:00, 2, 0
+TU, 8:00, 1, 0
 
 Lab slots:
-FR, 10:00, 1, 1
 
-C ourses:
-CPSC 433 LEC 01
-CPSC 433 LEC 02
+Courses:
+CPSC 416 LEC 09
+CPSC 518 LEC 09
 
 Labs:
-CPSC 433 LEC 01 TUT 01
 
 Not compatible:
 

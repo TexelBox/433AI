@@ -1,18 +1,16 @@
 Name:
-WrongKeyWords4
+500LevelCourses1
 
 Course slots:
-MO, 8:00, 3, 2
+MO, 8:00, 2, 0
 
 Lab slots:
-FR, 10:00, 1, 1
 
-C ourses:
-CPSC 433 LEC 01
-CPSC 433 LEC 02
+Courses:
+CPSC 516 LEC 01
+CPSC 518 LEC 01
 
 Labs:
-CPSC 433 LEC 01 TUT 01
 
 Not compatible:
 

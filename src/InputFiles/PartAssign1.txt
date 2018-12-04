@@ -1,0 +1,31 @@
+Name:
+PartAssign1
+
+Course slots:
+MO, 8:00, 1, 0
+TU, 9:30, 2, 1
+
+Lab slots:
+TU, 12:00, 2, 1
+
+Courses:
+CPSC 433 LEC 01
+CPSC 433 LEC 02
+
+Labs:
+CPSC 433 TUT 01
+CPSC 433 LAB 02
+
+Not compatible:
+
+Unwanted:
+
+Preferences:
+
+Pair:
+
+Partial assignments:
+CPSC 433 LEC 01, TU, 9:30
+CPSC 433 LEC 02, TU, 9:30
+CPSC 433 TUT 01, TU, 12:00
+CPSC 433 LAB 02, TU, 12:00

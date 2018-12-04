@@ -1,1 +1,3 @@
-NO VALID SOLUTION
+Eval-value: 0.0
+CPSC 433 LEC 01             : MO, 8:00
+CPSC 433 LEC 01 TUT 01      : TU, 8:00

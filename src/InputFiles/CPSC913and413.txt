@@ -1,18 +1,17 @@
 Name:
-WrongKeyWords4
+CPSC913and413
 
 Course slots:
-MO, 8:00, 3, 2
+TU, 18:00, 1, 0
+MO, 10:00, 1, 0
 
 Lab slots:
-FR, 10:00, 1, 1
 
-C ourses:
-CPSC 433 LEC 01
-CPSC 433 LEC 02
+Courses:
+CPSC 413 LEC 01
+CPSC 913 LEC 01
 
 Labs:
-CPSC 433 LEC 01 TUT 01
 
 Not compatible:
 

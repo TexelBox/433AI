@@ -1,17 +1,19 @@
 Name:
-AnotherDayForSlot3
+Tuesdays1100to1230
 
 Course slots:
-MO, 8:00, 3, 1
+TU, 11:00, 1, 0
+TU, 12:30, 1, 0
 
 Lab slots:
-TH, 10:00,2,1
+TU, 12:00, 1, 0
 
 Courses:
-CPSC 433 LEC 01
+CPSC 416 LEC 01
+CPSC 418 LEC 01
 
 Labs:
-CPSC 433 LEC 01 TUT 01
+CPSC 418 TUT 01
 
 Not compatible:
 

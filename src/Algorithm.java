@@ -62,7 +62,7 @@ public class Algorithm {
 
             // then move onto rest of algorithm
             Node chosenLeaf = _mainTree.fLeaf();
-            _mainTree.fTrans(chosenLeaf, false, -1);
+            _mainTree.fTrans(chosenLeaf, false, 0); // just use last param as 0
 
         }
 

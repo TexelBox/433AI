@@ -148,7 +148,8 @@ public class AndTree {
     public void fTrans(Node chosenLeaf, boolean doPartAssign, int partAssignChangedIndex) {
 
         if (chosenLeaf._changedIndex == -1) {
-            chosenLeaf.expand(doPartAssign, partAssignChangedIndex);           
+            chosenLeaf.expand(doPartAssign, partAssignChangedIndex);
+            return;           
         }
 
 

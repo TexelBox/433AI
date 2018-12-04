@@ -117,10 +117,11 @@ public class Node {
         // based on doPartAssign figure out which index in _problem we are changing
 
         int newChangedIndex = 0;
+
         Slot forcedSlot = Input.getInstance()._partialAssignments[partAssignChangedIndex];
         List<Slot> forcedSlotSingletonList = new ArrayList<Slot>();
         forcedSlotSingletonList.add(forcedSlot);
-
+        
         if (doPartAssign) {
             newChangedIndex = partAssignChangedIndex;
         }
@@ -129,6 +130,7 @@ public class Node {
             for (int i = _changedIndex+1; i < _problem.length; i++) {
                 if (_problem[i] == null) {
                     newChangedIndex = i;
+                    break;
                 }
             }
         }

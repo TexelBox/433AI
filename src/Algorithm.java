@@ -78,7 +78,7 @@ public class Algorithm {
             // output to file (bestAssign sorted alphabetically) ~~~~~~~~move this
         }
         else {
-            System.out.println("NO VALID SOLUTION"); // ~~~~~~~~~~~~~debug msg
+            //System.out.println("NO VALID SOLUTION"); // ~~~~~~~~~~~~~debug msg
             return false;
             // output to file (NO VALID SOLUTION)
         }

@@ -82,7 +82,12 @@ public class Output {
             }
         }
 
-
+        try {
+            writer.close();
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: failed to close output file");
+        }
 
 
 
@@ -97,8 +102,15 @@ public class Output {
             System.out.println("ERROR: failed to write to output file");
         }
 
-    }
+        try {
+            writer.close();
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: failed to close output file");
+        }
 
+
+    }
 
 
     

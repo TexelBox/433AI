@@ -1,12 +1,12 @@
 Name:
 TooManyLabsInput
 
-Course Slots:
+Course slots:
 MO, 10:00, 2, 0
 TU, 6:00, 2, 0
 TU, 18:00, 2, 0
 
-Lab Slots:
+Lab slots:
 MO, 10:00, 1, 1
 TU, 12:00, 1, 1
 FR, 15:00, 2, 1
@@ -24,7 +24,7 @@ CPSC 329 LEC 01 TUT 01
 CPSC 329 LEC 02 TUT 02
 CPSC 527 LEC 01 TUT 01
 
-Not Compatible:
+Not compatible:
 
 Unwanted:
 
@@ -33,4 +33,4 @@ MO, 10:00, CPSC 433 LEC 01, 10
 
 Pair:
 
-Partial Assignments:
+Partial assignments:

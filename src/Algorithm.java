@@ -40,8 +40,8 @@ public class Algorithm {
     }
 
 
-
-    public void processTree() { // work in here
+    // return True if we have a valid solution...
+    public boolean processTree() { // work in here
 
         // process partialassignments first
 
@@ -66,12 +66,21 @@ public class Algorithm {
 
         }
 
+
+
+        // after finishing tree search...
+
+        Output.getInstance()._tree = _mainTree; // pass reference to our tree into output
+
+
         if (_mainTree._foundValidAssign) {
-            // output to file (bestAssign sorted alphabetically)
+            return true;
+            // output to file (bestAssign sorted alphabetically) ~~~~~~~~move this
         }
         else {
+            System.out.println("NO VALID SOLUTION"); // ~~~~~~~~~~~~~debug msg
+            return false;
             // output to file (NO VALID SOLUTION)
-            System.out.println("NO VALID SOLUTION");
         }
 
 

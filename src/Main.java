@@ -12,6 +12,14 @@ public class Main {
             String inputFile = args[0];
             String outputFile = args[1];
 
+            //Output.getInstance()._outputFilePath = outputFile; // ~~~~~~~~~~~~add filename checking here
+
+            boolean doesOutputFileExist = Output.getInstance().setOutputFilePath(outputFile);
+
+            if (!doesOutputFileExist) {
+                return;
+            }
+
             try {
                 Algorithm.pen_coursemin = Double.parseDouble(args[2]);
                 Algorithm.pen_labsmin = Double.parseDouble(args[3]);
@@ -29,17 +37,30 @@ public class Main {
             
             Algorithm.setNegativeWeightOrPenalty();
 
-            boolean errorOccurred = false;
+            boolean parseErrorOccurred = false;
 
             try {
-                errorOccurred = !Input.getInstance().parseFile(inputFile); 
+                parseErrorOccurred = !Input.getInstance().parseFile(inputFile); 
             } catch (Exception e) {
                 System.out.println("Error: Main.java | parsing file threw exception");
-                errorOccurred = true;
+                parseErrorOccurred = true;
             }
 
-            if (!errorOccurred) {
-                // use the data structures in input to run the AND-TREE class on. 
+            if (!parseErrorOccurred) {
+                // use the data structures in input to run the AND-TREE class on.
+                Algorithm algo = new Algorithm();
+                boolean isValidSol = algo.processTree(); 
+                if (isValidSol) {
+                    // print output to output file
+                    Output.getInstance().outputValidSolution();
+                }
+                else { // didnt find a valid sol..
+                    // print NO VALID SOL to output file
+                    Output.getInstance().outputNoValidSolution();
+                }
+
+
+
             }
         }
         else {

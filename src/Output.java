@@ -56,7 +56,7 @@ public class Output {
         catch (IOException e) {
             System.out.println("ERROR: failed to write to output file");
         }
-        
+
         Slot[] bestAssign = _tree._bestAssign;
 
         for (int i = 0; i < bestAssign.length; i++) {
@@ -90,6 +90,13 @@ public class Output {
 
     public void outputNoValidSolution() { // write NO VALID SOLUTION to file
         
+        try {
+            writer.write("NO VALID SOLUTION\n");  
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: failed to write to output file");
+        }
+
     }
 
 

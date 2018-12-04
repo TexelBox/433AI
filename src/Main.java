@@ -5,16 +5,20 @@ public class Main {
 
     public static void main(String[] args) {
 
-        if (args.length == 10) { // change this later when more command-line args need to be specified (like soft constraints)
+        if (args.length == 10) { 
 
-            // ~~~~~~~add checking here that the files exist... (at least the inputfile, since the outputfile would be created if notn existing)
+            // checking here that the files exist... (at least the inputfile, since the outputfile would be created if not existing)
 
-            String inputFile = args[0];
-            String outputFile = args[1];
+            String inputFilePath = args[0];
+            String outputFilePath = args[1];
+            
+            boolean doesInputFileExist = Input.getInstance().setInputFilePath(inputFilePath);
+            
+            if (!doesInputFileExist) {
+            	return;
+            }
 
-            //Output.getInstance()._outputFilePath = outputFile; // ~~~~~~~~~~~~add filename checking here
-
-            boolean doesOutputFileExist = Output.getInstance().setOutputFilePath(outputFile);
+            boolean doesOutputFileExist = Output.getInstance().setOutputFilePath(outputFilePath);
 
             if (!doesOutputFileExist) {
                 return;
@@ -31,37 +35,29 @@ public class Main {
                 Algorithm.w_secdiff = Double.parseDouble(args[9]);
             }
             catch (NumberFormatException e) {
-                System.out.println("ERROR: one of the command-line penalties/weights is non-numeric. Please ensure to only specify strings that can be interpreted as a real number");
+                System.out.println("ERROR: one of the command-line penalties/weights is non-numeric. Please ensure to only specify strings that can be interpreted as a real number.");
                 return;
             }
             
             Algorithm.setNegativeWeightOrPenalty();
 
-            boolean parseErrorOccurred = false;
-
-            try {
-                parseErrorOccurred = !Input.getInstance().parseFile(inputFile); 
-            } catch (Exception e) {
-                System.out.println("Error: Main.java | parsing file threw exception");
-                parseErrorOccurred = true;
-            }
+            boolean parseErrorOccurred = !Input.getInstance().parseFile(); 
 
             if (!parseErrorOccurred) {
-                // use the data structures in input to run the AND-TREE class on.
+                // use the data structures in input to run the algorithm on.
                 Algorithm algo = new Algorithm();
                 boolean isValidSol = algo.processTree(); 
                 if (isValidSol) {
-                    // print output to output file
+                    // print bestEval and bestAssign to output file
                     Output.getInstance().outputValidSolution();
                 }
-                else { // didnt find a valid sol..
-                    // print NO VALID SOL to output file
+                else { // didn't find a valid solution..
+                    // print NO VALID SOLUTION to output file
                     Output.getInstance().outputNoValidSolution();
                 }
 
-
-
             }
+            
         }
         else {
             System.out.println("Usage: java Main <input file> <output file> <pen_coursemin> <pen_labsmin> <pen_notpaired> <pen_section> <w_minfilled> <w_pref> <w_pair> <w_secdiff>");

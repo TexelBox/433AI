@@ -28,14 +28,14 @@ public class Output {
     private BufferedWriter writer;
 
 
-    // return TRUE if file exists...
+    // return TRUE if output file exists...
     public boolean setOutputFilePath(String outputFilePath) {
         _outputFilePath = outputFilePath;
 
         try {
             writer = new BufferedWriter(new FileWriter(_outputFilePath));
         } catch (IOException e) {
-            System.out.println("ERROR: output file doesn't exist");
+            System.out.println("ERROR: The specified output file was not found/created.");
             return false;
         }
 

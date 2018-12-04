@@ -75,12 +75,9 @@ public class Algorithm {
 
         if (_mainTree._foundValidAssign) {
             return true;
-            // output to file (bestAssign sorted alphabetically) ~~~~~~~~move this
         }
         else {
-            //System.out.println("NO VALID SOLUTION"); // ~~~~~~~~~~~~~debug msg
             return false;
-            // output to file (NO VALID SOLUTION)
         }
 
 

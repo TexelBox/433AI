@@ -190,25 +190,48 @@ public class Input {
     private boolean _nameKeyFound, _courseSlotsKeyFound, _labSlotsKeyFound, _coursesKeyFound, _labsKeyFound, _notCompatibleKeyFound, _unwantedKeyFound, _preferencesKeyFound, _pairKeyFound, _partialAssignmentsKeyFound;
 
     private boolean _courseSlotDefined, _labSlotDefined, _courseDefined, _labDefined; // all init are false
+    
+    
+    
+    public String _inputFilePath;
+
+    private BufferedReader reader;
+    
 
     // methods...
+    
+    
+    // return TRUE if input file exists...
+    public boolean setInputFilePath(String inputFilePath) {
+        _inputFilePath = inputFilePath;
+
+        try {
+        	reader = new BufferedReader(new FileReader(inputFilePath));
+        } catch (IOException e) {
+            System.out.println("ERROR: The specified input file was not found.");
+            return false;
+        }
+
+        return true;
+
+    }
+    
+    
+    
+    
 
     // return T or F (was parsing error-free?)
-    public boolean parseFile(String filename) throws Exception {
+    public boolean parseFile() {
 
         List<String> allNonBlankTrimmedLines = new ArrayList<String>();
-
-		FileReader fr = null;
-		BufferedReader br = null; 
+ 
         try {
-			fr = new FileReader(filename);
-            br = new BufferedReader(fr); 
             
             // 1. read entire file into an arraylist that stores each NON-BLANK TRIMMED line as an element
 
 			String line; // read 1 line at a time into arraylist
 			
-            while ((line = br.readLine()) != null) { // read until hitting EOF...
+            while ((line = reader.readLine()) != null) { // read until hitting EOF...
                 
                 line = line.trim(); // remove leading and trailing whitespace...
                 
@@ -219,17 +242,23 @@ public class Input {
                 allNonBlankTrimmedLines.add(line); // append to end of list
             }
 
-        } catch (FileNotFoundException e) {
-            System.out.println("Error: Input.java | The specified input file was not found.");
         } catch (IOException e) {
-            System.out.println("Error: Input.java | Failed to read line properly.");
-        } finally {
-            if (fr != null) {
-                fr.close(); // also closes br for us
-            }	
-        }
+            System.out.println("ERROR: Parser failed to read line properly.");
+            try {
+				reader.close();
+			} catch (IOException e1) {
+				System.out.println("ERROR: Parser failed to close in-stream.");
+			}
+            return false;
+        } 
+            
+        try {
+			reader.close();
+		} catch (IOException e) {
+			System.out.println("ERROR: Parser failed to close in-stream.");
+			return false;
+		}
 
-        // MOVE THE fileopening into another fucntion
 
         int nameKeyIndex, courseSlotsKeyIndex, labSlotsKeyIndex, coursesKeyIndex, labsKeyIndex, notCompatibleKeyIndex, unwantedKeyIndex, preferencesKeyIndex, pairKeyIndex, partialAssignmentsKeyIndex;
         nameKeyIndex = courseSlotsKeyIndex = labSlotsKeyIndex = coursesKeyIndex = labsKeyIndex = notCompatibleKeyIndex = unwantedKeyIndex = preferencesKeyIndex = pairKeyIndex = partialAssignmentsKeyIndex = -1; // init to an invalid index

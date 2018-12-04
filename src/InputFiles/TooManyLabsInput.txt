@@ -3,13 +3,12 @@ TooManyLabsInput
 
 Course slots:
 MO, 10:00, 2, 0
-TU, 6:00, 2, 0
-TU, 18:00, 2, 0
+TU, 9:30, 2, 0
+TU, 18:30, 2, 0
 
 Lab slots:
 MO, 10:00, 1, 1
-TU, 12:00, 1, 1
-FR, 15:00, 2, 1
+TU, 12:00, 3, 1
 
 Courses:
 CPSC 433 LEC 01

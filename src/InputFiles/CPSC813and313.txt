@@ -2,7 +2,8 @@ Name:
 CPSC813and313
 
 Course slots:
-TU, 18:00, 2, 0
+TU, 18:00, 1, 0
+MO, 9:00, 1, 0
 
 Lab slots:
 

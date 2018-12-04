@@ -51,13 +51,13 @@ public class Slot {
 
     public Set<Integer> _overlaps = new HashSet<Integer>(); // the set of slot indices that this slot overlaps (not including itself)
 
-    public int _twinSlotIndex; // index of the slot that starts at the same time as this slot if there is one...
+    public int _twinSlotIndex = -1; // index of the slot that starts at the same time as this slot if there is one... (will stay -1 if this slot has no twin)
     public boolean _hasTwin = false;
 
     // algorithm stuff...
-    public List<Integer> _courseIndices = new ArrayList<Integer>(); // current indices of courses (lecs+labs) assigned to this slot
-    public int _lectureCount = 0; // number of lectures in _courseIndices 
-    public int _labCount = 0; // number of labs/tuts in _courseIndices
+    //public List<Integer> _courseIndices = new ArrayList<Integer>(); // current indices of courses (lecs+labs) assigned to this slot
+    //public int _lectureCount = 0; // number of lectures in _courseIndices 
+    //public int _labCount = 0; // number of labs/tuts in _courseIndices
 
     
 
@@ -75,7 +75,7 @@ public class Slot {
         setHashKeys();
     }
 
-
+/*
     // copy constructor...
     public Slot(Slot slot) {
         this._hashIndex = slot._hashIndex;
@@ -110,7 +110,7 @@ public class Slot {
         this._lectureCount = slot._lectureCount;
         this._labCount = slot._labCount;
     }
-
+*/
 
 
     private void initValidSlots() { // inits the 2 static hashsets of valid slot hashKeys, only need to do the work for the first time (first instance)
@@ -334,11 +334,11 @@ public class Slot {
         // get the course indices currently assigned to this slot
         // using these indices we then check over the data structures in Input class
 
-        if (_lectureCount > _coursemax) {
+        if (node._lectureCounts[_hashIndex] > _coursemax) {
             return false; // VIOLATION
         }
 
-        if (_labCount > _labmax) {
+        if (node._labCounts[_hashIndex] > _labmax) {
             return false; // VIOLATION
         }
 
@@ -350,13 +350,14 @@ public class Slot {
         int changedIndex = node._changedIndex; // WE ONLY HAVE TO CHECK THIS CHANGE (added 1 course to this slot by the expansion)
 
         // check inside this slot...
-        for (int sameSlotCourseIndex : _courseIndices) { 
+        for (Course sameSlotCourse : node._coursesAssignedToSlots.get(_hashIndex)) { 
+        	int sameSlotCourseIndex = sameSlotCourse._hashIndex;
             if (sameSlotCourseIndex != changedIndex) { // have to ignore comparison with itself
                 if (Input.getInstance()._notCompatibles[changedIndex][sameSlotCourseIndex]) { // check not-compat
                     return false; // VIOLATION
                 }
 
-                if (Input.getInstance()._courseList.get(changedIndex)._is500Course && Input.getInstance()._courseList.get(sameSlotCourseIndex)._is500Course) { // 2 500-lvl LECS overlapping
+                if (Input.getInstance()._courseList.get(changedIndex)._is500Course && sameSlotCourse._is500Course) { // 2 500-lvl LECS overlapping
                     return false; // VIOLATION
                 }
             }
@@ -364,19 +365,21 @@ public class Slot {
 
         // now check inside overlapping slots...
 
-        for (int overlapSlotIndex : _overlaps) { // for each overlapped slot...
-            if (node._assignedSlots.containsKey(overlapSlotIndex)) { // if this overlap slot was assigned to at least 1 course in current problem...
-                Slot overlapSlot = node._assignedSlots.get(overlapSlotIndex);
-                for (int overlapSlotCourseIndex : overlapSlot._courseIndices) { // for each overlapping course in this overlap slot...
+        for (int overlapSlotIndex : _overlaps) { // for each overlapped slot..
+        	if (!node._coursesAssignedToSlots.get(overlapSlotIndex).isEmpty()) { // if this overlap slot was assigned to at least 1 course in current problem...
+        		Slot overlapSlot = Input.getInstance()._slotList.get(overlapSlotIndex);
+        		for (Course overlapSlotCourse : node._coursesAssignedToSlots.get(overlapSlotIndex)) { // for each overlapping course in this overlap slot...
+        			int overlapSlotCourseIndex = overlapSlotCourse._hashIndex;
                     if (Input.getInstance()._notCompatibles[changedIndex][overlapSlotCourseIndex]) { // check not-compat
                         return false; // VIOLATION
                     }
     
-                    if (Input.getInstance()._courseList.get(changedIndex)._is500Course && Input.getInstance()._courseList.get(overlapSlotCourseIndex)._is500Course) { // 2 500-lvl LECS overlapping
+                    if (Input.getInstance()._courseList.get(changedIndex)._is500Course && overlapSlotCourse._is500Course) { // 2 500-lvl LECS overlapping
                         return false; // VIOLATION
                     }
                 }
-            }
+        	}
+        	
         }
 
         // NOTE: no need to check partassign constraint since it will be true by default if the preprocessing worked correctly (already did the check for setting the root)
@@ -399,7 +402,7 @@ public class Slot {
     }
 
 
-
+/*
     private double getEvalMinfilled(Node node) {
 
         double evalMinfilled;
@@ -590,6 +593,6 @@ public class Slot {
 
         return eval;
     } 
-
+*/
 
 }

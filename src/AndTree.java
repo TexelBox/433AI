@@ -19,10 +19,6 @@ public class AndTree {
     thus, f_leaf can just select the top of the stack to pop off...
     */
 
-
-
-    //public List<Node> _leaves = new ArrayList<Node>(); // ~~~~~~~~~~~~~maybe use a stack instead since we are checking based on least number of NULLS which when we expand, the new leaves get put on top of stack and have less NULL than everything else
-
     // thus we will have NO VALID SOLUTION once we reach the goal condition (stop) and _bestAssign is NULL, or now use _foundValidAssign == false
     public Slot[] _bestAssign; // remember our best _currentAssign that we had (if we had one that was valid and complete)
     public double _bestEval = Double.POSITIVE_INFINITY; 
@@ -32,19 +28,14 @@ public class AndTree {
     // methods...
 
     public AndTree() {
-        // ~~~~init root before adding!!!, ether here or at declaration
-        // do all the partassign checks here or maybe have the root be all NULL then we run another function to initialize the tree by expanding a chain 1 partassign at a time and checking hard cobstraints
-        // NOTE: eval doesn't need to be calculated until we find our first best solution (optimization), have a flag in here to specify when to start
-        //initRoot(); // this will run through partassign and generate 
-
-        initRoot();
+        initRoot(); // create first node with empty problem on stack
     }
 
 
     private void initRoot() {
         Slot[] blankProblem = new Slot[Input.getInstance()._courseList.size()]; // init all nulls
 
-        int remainingCoursesCount = 0; // start at 0
+        int remainingCoursesCount = 0; // build up from 0
         int remainingLabsCount = 0;
 
         List<Course> theCourseList = Input.getInstance()._courseList;
@@ -56,81 +47,25 @@ public class AndTree {
                 remainingLabsCount++;
             }
         }
+        
+        
+        List<ArrayList<Course>> coursesAssignedToSlots = new ArrayList<ArrayList<Course>>(Input.getInstance()._slotList.size()); // empty list (no inner lists yet)
+        
+        for (Slot sl : Input.getInstance()._slotList) { // for every defined slot...
+        	ArrayList<Course> innerEmptyList = new ArrayList<Course>(); // empty
+        	coursesAssignedToSlots.add(innerEmptyList);
+        }
+        
+        
+        int[] lectureCounts = new int[Input.getInstance()._slotList.size()]; // all 0 by default
+        
+        int[] labCounts = new int[Input.getInstance()._slotList.size()]; // all 0 by default
+        
 
-        Node root = new Node(blankProblem, false, 0, -1, remainingCoursesCount, remainingLabsCount);
+        Node root = new Node(blankProblem, false, 0, -1, remainingCoursesCount, remainingLabsCount, coursesAssignedToSlots, lectureCounts, labCounts);
 
         _leaves.push(root);
     }
-
-
-
-
-
-    // preprocesses the Input's _partasignments (which we know have either 0 or 1 forced slot assignements to a course/lab)
-    // we also know that they don't overlap an unwanted, so we dont need to check again, even though node will, but whatever
-    //public boolean preProcess() {
-        // apply my heuristic below...
-    //}
-
-
-    /*
-
-    THIS WILL WORK! i hope...
-
-    init root by applying the same algorithm 1 by one (that way i can use same functions)
-
-    init node as <NULL, ...., NULL> // all nulls, push into leaves (now we have 1 leaf)
-
-    for (lenggth of non nulls in partassignments) {
-        take leaf and change the problem index corresponding to next partassign to create a new child node,
-        we pop off the old leaf and we push this new leaf (now we have 1 leaf)	
-    }
-
-    after all this we have 1 leaf which we can call the root, but it will have a depth of #of nonnulls in partassign
-
-
-    */
-
-
-
-
-
-
-
-
-
-    /*
-    // here initialize the root node as a node w/ problem = <NULL, NULL, ... partassign, .., NULL> and sol = ? (false)
-    // will basically be running the algorithm without fLeaf and fTrans here, since we want to hard code control of what to use next.
-    private void initRoot() {
-
-        // we want our root problem to look like Input.getInstance()._partialAssignments
-        // so we need to take that array right there and deep copy it to get our problem
-        // we then call variant function of checkHardconstarints to check over every cell in thus problem
-        // if no hard cons violated, we then call variant function of getEval which works over entire problem
-        // we set eval to this, sol to false, changedIndex to -1 (means we dont have to check this node at all)
-        // then set root to this new node and then begin search
-        // ~~~~~~~~~~~~ACTUALLY it would be beneficial to set the depth = number of non-nulls in array, so that I can subtract TotalNumberOfCourses/Labs - labcount/leccount and if this difference is < coursemin/coursemax - leccount/labcount then I can add this part of the Eval and flip the flag (to say dont add this again)
-
-
-
-        //Slot[] problem = new Slot[Input.getInstance()._courseList.size()]; // all NULLs
-        //boolean sol = false; // start with sol = ?
-        //int depth = 0;
-        //double eval = 0;
-        //int changedIndex = -1 // no change
-        //_root = new Node(blankProb, sol, depth, eval, changedIndex);
-
-        
-    }
-    */
-
-
-    
-
-
-
-
 
 
 
@@ -147,11 +82,12 @@ public class AndTree {
     // Param: chosenLeaf - is the node returned by fLeaf()
     public void fTrans(Node chosenLeaf, boolean doPartAssign, int partAssignChangedIndex) {
 
-        if (chosenLeaf._changedIndex == -1) {
+        if (chosenLeaf._changedIndex == -1) { // if coming from the empty start node...
             chosenLeaf.expand(doPartAssign, partAssignChangedIndex);
             return;           
         }
 
+        // otherwise for all other nodes...
 
         boolean allHardConsSatisfied = chosenLeaf.checkHardConstraints();
 
@@ -169,49 +105,50 @@ public class AndTree {
         // THEN If we are closing the leaf because the problem is solved (as in we found all the slot assignments; there are no NULLs), then we update the bestEval and bestAssign accordingly. 
         // Note that we can only check Eval after a valid solution is found (if bestAssign != NULL).
 
-        if (_foundValidAssign && chosenLeaf._isFull) {
-            chosenLeaf.setEval();
-            double theEval = chosenLeaf._eval;
-
-            if (theEval < _bestEval) {
-                // update best then close node
+        
+        // only want to get eval when _foundValidAssign = true || chosenLeaf._isFull
+        
+        double theEval = 0;
+        if (_foundValidAssign || chosenLeaf.isFull()) {
+        	chosenLeaf.setEval();
+            theEval = chosenLeaf._eval;
+        }
+        
+        if (_foundValidAssign) {
+        	if (chosenLeaf.isFull()) {
+        		if (theEval < _bestEval) {
+        			// update best then close node
+                    updateBest(chosenLeaf._problem, theEval);
+        		}
+        		chosenLeaf.close(); // close cause its full
+        	}
+        	else {
+        		if (theEval < _bestEval) {
+                    // expand node
+                    chosenLeaf.expand(doPartAssign, partAssignChangedIndex); // it has potential still
+                }
+                else {
+                    // close node without updating best
+                    chosenLeaf.close(); // future eval will still be worse            
+                }
+        	}
+        }
+        else { // havent found a valid assign yet...
+        	if (chosenLeaf.isFull()) {
+                // set best for the first time here and close (nothing to compare to, so we are the best)
                 updateBest(chosenLeaf._problem, theEval);
                 chosenLeaf.close();
-            }
-            else {
-                // close node without updating best
-                chosenLeaf.close();
-            }
-        }
-        else if (_foundValidAssign) { // only found valid (not full)
-            chosenLeaf.setEval();
-            double theEval = chosenLeaf._eval;
-
-            if (theEval < _bestEval) {
-                // expand node
-                chosenLeaf.expand(doPartAssign, partAssignChangedIndex);
-            }
-            else {
-                // close node without updating best
-                chosenLeaf.close();            
-            }
-        }
-        else if (chosenLeaf._isFull) { // only full (havent found valid yet)
-            chosenLeaf.setEval();
-            double theEval = chosenLeaf._eval;
-
-            // set best for the first time here and close
-            updateBest(chosenLeaf._problem, theEval);
-            chosenLeaf.close();
-        }
-        else { // if we haven't found a valid and not full
-            // expand node - nothing to comapre to
-            chosenLeaf.expand(doPartAssign, partAssignChangedIndex);
+        	}
+        	else {
+        		// expand node - nothing to compare to (so we dont need to eval - which we didnt)
+                chosenLeaf.expand(doPartAssign, partAssignChangedIndex); // it still has potential
+        	}
         }
 
     }
-
-
+    
+    
+    
     public void updateBest(Slot[] newBestAssign, double newBestEval) {
         _bestAssign = newBestAssign;
         _bestEval = newBestEval;
@@ -221,3 +158,33 @@ public class AndTree {
 
 
 }
+
+
+//preprocesses the Input's _partasignments (which we know have either 0 or 1 forced slot assignements to a course/lab)
+// we also know that they don't overlap an unwanted, so we dont need to check again, even though node will, but whatever
+//public boolean preProcess() {
+    // apply my heuristic below...
+//}
+
+
+/*
+
+THIS WILL WORK! i hope...
+
+init root by applying the same algorithm 1 by one (that way i can use same functions)
+
+init node as <NULL, ...., NULL> // all nulls, push into leaves (now we have 1 leaf)
+
+for (lenggth of non nulls in partassignments) {
+    take leaf and change the problem index corresponding to next partassign to create a new child node,
+    we pop off the old leaf and we push this new leaf (now we have 1 leaf)	
+}
+
+after all this we have 1 leaf which we can call the root, but it will have a depth of #of nonnulls in partassign
+
+
+*/
+
+
+
+

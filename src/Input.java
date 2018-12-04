@@ -507,7 +507,7 @@ public class Input {
         // all explicit data set correctly...
 
         if (!postProcessData()) {
-            System.out.println("NO VALID SOLUTION");
+            System.out.println("NO VALID SOLUTION"); // ~~~~~~~~~~~~~~~~~I NEED TO CALL OUTPUTNOVALIDHERE
             return false;
         }
 

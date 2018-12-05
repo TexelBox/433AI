@@ -3,6 +3,8 @@
 
 public class Main {
 
+    public static boolean _DEBUG = true; // ~~~~~~~~~~~make sure to set false for submission
+
     public static void main(String[] args) {
 
         if (args.length == 10) { 
@@ -24,6 +26,15 @@ public class Main {
                 return;
             }
 
+            if (_DEBUG) {
+                boolean doesLogFileExist = Output.getInstance().initLogWriter();
+                if (!doesLogFileExist) {
+                    return;
+                }
+            }
+
+
+
             try {
                 Algorithm.pen_coursemin = Double.parseDouble(args[2]);
                 Algorithm.pen_labsmin = Double.parseDouble(args[3]);
@@ -41,6 +52,8 @@ public class Main {
             
             Algorithm.setNegativeWeightOrPenalty();
 
+            Algorithm._runtime = 86400000; // 24 hrs
+
             boolean parseErrorOccurred = !Input.getInstance().parseFile(); 
 
             if (!parseErrorOccurred) {
@@ -52,15 +65,26 @@ public class Main {
                     Output.getInstance().outputValidSolution();
                 }
                 else { // didn't find a valid solution..
-                    // print NO VALID SOLUTION to output file
-                    Output.getInstance().outputNoValidSolution();
+                    // if we timed out without finding one...
+                    if (System.currentTimeMillis() >= Algorithm._endtime) { // if we timed out with no solution found yet...
+                        Output.getInstance().outputNoSolutionFoundYet();
+                    }
+                    else {
+                        // print NO VALID SOLUTION to output file
+                        Output.getInstance().outputNoValidSolution();
+                    }
                 }
 
+            }
+
+            Output.getInstance().closeOutputFile();
+            if (_DEBUG) {
+                Output.getInstance().closeLogFile();
             }
             
         }
         else {
-            System.out.println("Usage: java Main <input file> <output file> <pen_coursemin> <pen_labsmin> <pen_notpaired> <pen_section> <w_minfilled> <w_pref> <w_pair> <w_secdiff>");
+            System.out.println("Usage: java -jar CPSC433AI.jar <input file> <output file> <pen_coursemin> <pen_labsmin> <pen_notpaired> <pen_section> <w_minfilled> <w_pref> <w_pair> <w_secdiff>");
         }
     }
 }

@@ -30,6 +30,8 @@ public class Output {
 
     private BufferedWriter writer;
 
+    private BufferedWriter logwriter;
+
 
     // return TRUE if output file exists...
     public boolean setOutputFilePath(String outputFilePath) {
@@ -46,8 +48,67 @@ public class Output {
 
     }
 
+    public boolean initLogWriter() {
+
+        try {
+            logwriter = new BufferedWriter(new FileWriter("log.txt"));
+        } catch (IOException e) {
+            System.out.println("ERROR: log.txt could not be created.");
+            return false;
+        }
+
+        return true;
+    }
+
 
     // methods...
+
+    public void logValidSolution() {
+        try {
+            logwriter.write("===============================================\n");
+            logwriter.write("Eval-value: " + Double.toString(_tree._bestEval) + "\n");  
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: failed to write to output file");
+        }
+
+        Slot[] bestAssign = _tree._bestAssign;
+        
+        List<String> outList = new ArrayList<String>();
+
+        for (int i = 0; i < bestAssign.length; i++) {
+            Course nextCourse = Input.getInstance()._courseList.get(i);
+            String nextCourseOutputID = nextCourse._outputID;
+            String nextSlotOutputID = bestAssign[i]._outputID;
+
+            String spacing;
+            if (nextCourse._secondaryType == Course.SecondaryType.NONE) {
+                spacing = "             : ";
+            }
+            else {
+                spacing = "      : ";
+            }
+
+            String outLine = nextCourseOutputID + spacing + nextSlotOutputID;
+            
+            outList.add(outLine);
+
+        }
+        
+        Collections.sort(outList);
+        
+        
+        try {
+        	for (String str : outList) {
+        		logwriter.write(str + "\n");
+        	}
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: failed to write to output file");
+        }
+    }
+
+
 
     
 
@@ -94,16 +155,6 @@ public class Output {
         catch (IOException e) {
             System.out.println("ERROR: failed to write to output file");
         }
-        
-
-        try {
-            writer.close();
-        }
-        catch (IOException e) {
-            System.out.println("ERROR: failed to close output file");
-        }
-
-
 
     }
 
@@ -116,15 +167,42 @@ public class Output {
             System.out.println("ERROR: failed to write to output file");
         }
 
+    }
+
+
+    public void outputNoSolutionFoundYet() { // if we happen to timeout without finding a valid sol...
+        
+        try {
+            writer.write("NO VALID SOLUTION FOUND WITHIN SPECIFIED RUNTIME\n");  
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: failed to write to output file");
+        }
+
+    }
+
+
+
+    public void closeOutputFile() {
         try {
             writer.close();
         }
         catch (IOException e) {
             System.out.println("ERROR: failed to close output file");
         }
-
-
     }
+
+    public void closeLogFile() {
+        try {
+            logwriter.close();
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: failed to close log file");
+        }
+    }
+
+
+
 
 
     

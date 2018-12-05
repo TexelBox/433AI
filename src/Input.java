@@ -215,7 +215,17 @@ public class Input {
         return true;
 
     }
-    
+
+    /*
+    public void closeInputFile() {
+        try {
+            reader.close();
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: failed to close input file");
+        }
+    }
+    */
     
     
     
@@ -1573,7 +1583,7 @@ public class Input {
                 createAndAdd813(hashIndex813);
             }
             else {
-                System.out.println("ERROR: CPSC 813 cannot be initialized due to TU 18:00 lab slot never being defined."); // ~~~~~~~~~~~NOTE: i need to change this so that it overrides the NO VALID SOLUTION
+                System.out.println("WARNING: CPSC 813 cannot be initialized due to TU 18:00 lab slot never being defined."); // ~~~~~~~~~~~NOTE: i need to change this so that it overrides the NO VALID SOLUTION
                 return false;
             }
             
@@ -1587,7 +1597,7 @@ public class Input {
                 createAndAdd913(hashIndex913);
             }
             else {
-                System.out.println("ERROR: CPSC 913 cannot be initialized due to TU 18:00 lab slot never being defined."); // ~~~~~~~~~~~NOTE: i need to change this so that it overrides the NO VALID SOLUTION
+                System.out.println("WARNING: CPSC 913 cannot be initialized due to TU 18:00 lab slot never being defined."); // ~~~~~~~~~~~NOTE: i need to change this so that it overrides the NO VALID SOLUTION
                 return false;
             }
         }
@@ -1606,7 +1616,7 @@ public class Input {
                 createAndAdd913(hashIndex913);
             }
             else {
-                System.out.println("ERROR: CPSC 813 and CPSC 913 cannot be initialized due to TU 18:00 lab slot never being defined."); // ~~~~~~~~~~~NOTE: i need to change this so that it overrides the NO VALID SOLUTION
+                System.out.println("WARNING: CPSC 813 and CPSC 913 cannot be initialized due to TU 18:00 lab slot never being defined."); // ~~~~~~~~~~~NOTE: i need to change this so that it overrides the NO VALID SOLUTION
                 return false;
             }
         }

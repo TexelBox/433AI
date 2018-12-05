@@ -1,6 +1,9 @@
 
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class Output {
 
@@ -58,6 +61,8 @@ public class Output {
         }
 
         Slot[] bestAssign = _tree._bestAssign;
+        
+        List<String> outList = new ArrayList<String>();
 
         for (int i = 0; i < bestAssign.length; i++) {
             Course nextCourse = Input.getInstance()._courseList.get(i);
@@ -73,14 +78,23 @@ public class Output {
             }
 
             String outLine = nextCourseOutputID + spacing + nextSlotOutputID;
+            
+            outList.add(outLine);
 
-            try {
-                writer.write(outLine + "\n");
-            }
-            catch (IOException e) {
-                System.out.println("ERROR: failed to write to output file");
-            }
         }
+        
+        Collections.sort(outList);
+        
+        
+        try {
+        	for (String str : outList) {
+        		writer.write(str + "\n");
+        	}
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: failed to write to output file");
+        }
+        
 
         try {
             writer.close();

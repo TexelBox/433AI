@@ -56,6 +56,8 @@ public class Node {
         _remainingCoursesCount = remainingCoursesCount;
         _remainingLabsCount = remainingLabsCount;
         _coursesAssignedToSlots = coursesAssignedToSlots;
+        _lectureCounts = lectureCounts;
+        _labCounts = labCounts;
     }
 
 
@@ -97,6 +99,19 @@ public class Node {
         int evalPref = getEvalPref();
         double evalPair = getEvalPair();
         double evalSecdiff = getEvalSecdiff(); 
+        
+        /*
+        if (isFull()) {
+        	
+        	System.out.println("BREAK");
+            System.out.println(evalMinfilled);
+            System.out.println(evalPref);
+            System.out.println(evalPair);
+            System.out.println(evalSecdiff);
+        }
+        */
+        
+        
 
         _eval = evalMinfilled * Algorithm.w_minfilled + evalPref * Algorithm.w_pref + evalPair * Algorithm.w_pair + evalSecdiff * Algorithm.w_secdiff;
     	
@@ -178,65 +193,91 @@ public class Node {
     // penalty if 2 paired courses/labs aren't assigned to same day and start time and end time (same slot or twin slot)
     private double getEvalPair() {
     	
-    	/*
     	double evalPair = 0;
-
-        // loop over _courseIndices,
-        // we have an index, which we can look up its row in _pairs
-        // if the entry is TRUE, then we check if that paired index is assigned yet...
-        // if it is ASSIGNED to a DIFFERENT slot, then we add pen_notpaired, and then we can can flag this index as checked (only flag the left index as checked), that way when it becomes the right index in another slot's function, we ignore it
-
-        for (int nextCourseIndex : _courseIndices) { // for each class stored in this slot...
-            for (int otherIndex = 0; otherIndex < Input.getInstance()._courseList.size(); otherIndex++) {
-
-                if (node._courseIndicesAlreadyCheckedForByPair.contains(otherIndex)) { // if this index was already check as a previous nextCourseIndex (either in this slot or other slots)...
-                    continue; // skip it (prevent symmetry causing 2*penalty)
-                }
-
-                if (Input.getInstance()._pairs[nextCourseIndex][otherIndex]) { // if we expect these 2 to be paired up...
-
-                    if (_courseIndices.contains(otherIndex)) { // if both courses are assigned to this slot (paired up), then we don't want to add this penalty
-                        continue;
-                    }
-
-                    if (_hasTwin) {
-                        Slot twinSlot;
-                        if (node._assignedSlots.containsKey(_twinSlotIndex)) { // if in our map..
-                            twinSlot = node._assignedSlots.get(_twinSlotIndex); // get from map if there is one
-                        }
-                        else { // if not in map (not assigned to any course yet)
-                            // get the template from _slotList
-                            twinSlot = Input.getInstance()._slotList.get(_twinSlotIndex);
-                        }
-
-                        if (twinSlot._courseIndices.contains(otherIndex)) {
-                            continue;
-                        }
-                    }
-                    
-
-                    // get here if othercourse isn't assigned to this slot (or its twin slot if it has one)
-                    // 2 cases, either not assigned at all (don't add penalty yet) or assigned to a different slot (now we can add penalty)
-
-                    if (node._problem[otherIndex] == null) { // unassigned course
-                        continue;
-                    }
-
-                    // get here and we know that this other course is assigned to a slot that isn't this one, so we now add the penalty...
-                    evalPair += Algorithm.pen_notpaired;
-                }
-            }
-
-            node._courseIndicesAlreadyCheckedForByPair.add(nextCourseIndex); // flag that we have already checked all the pairs containing this course (don't check again and add penalty again!)
-        }
-
-        return evalPair;
-        */
+    	
+    	for (int i = 0; i < Input.getInstance()._courseList.size()-1; i++) {
+    		for (int j = i+1; j < Input.getInstance()._courseList.size(); j++) {
+    			
+    			// comparing course i with course j
+    			
+    			Slot slotAssignedToI = _problem[i];
+    			Slot slotAssignedToJ = _problem[j];
+    			
+    			if (slotAssignedToI == null || slotAssignedToJ == null) { // if either course is not assigned yet then dont count penalty yet
+    				continue; // skip
+    			}
+    			
+    			// get here if both courses are assigned...
+    			
+    			// if they are assigned to same slot or a twin slot then they are paired and we dont count penalty
+    			
+    			if (slotAssignedToI._hashIndex == slotAssignedToJ._hashIndex) { // same slot
+    				continue; // skip
+    			}
+    			
+    			if (slotAssignedToI._hasTwin && slotAssignedToJ._hasTwin) {
+    				if (slotAssignedToI._twinSlotIndex == slotAssignedToJ._twinSlotIndex) {
+    					continue; // skip
+    				}
+    			}
+    			
+    			// get here and we know that this other course is assigned to a slot that isn't this one (or its twin), so we now add the penalty...
+                
+    			// if course I should be paired with course j, add penalty...
+    			
+    			if (Input.getInstance()._pairs[i][j]) {
+    				evalPair += Algorithm.pen_notpaired;
+    			}
+    		}
+    	}
+    	
+    	return evalPair;
     	
     }
     
     private double getEvalSecdiff() {
     	
+    	double evalSecdiff = 0;
+    	
+    	for (int i = 0; i < Input.getInstance()._courseList.size()-1; i++) {
+    		for (int j = i+1; j < Input.getInstance()._courseList.size(); j++) {
+    			
+    			Course courseI = Input.getInstance()._courseList.get(i);    
+    			Course courseJ = Input.getInstance()._courseList.get(j);   
+    			
+    			if (!courseI._isLecture || !courseJ._isLecture) { // if one of them isnt a lecture...
+    				continue; // skip
+    			}
+    			
+    			// get here with 2 lectures
+    			
+    			// now check if they are same class e.g. CPSC 433 LEC 01 and CPSC 433 LEC 02
+    			
+    			if (!courseI._sharedHashKey.equals(courseJ._sharedHashKey)) { // not from same class
+    				continue; // skip
+    			}
+    			
+    			// get here and in same class...
+    			
+    			// now check if they are assigned to same slot or an overlapping slot
+    			
+    			Slot slotAssignedToI = _problem[i];
+    			Slot slotAssignedToJ = _problem[j];
+    			
+    			if (slotAssignedToI == null || slotAssignedToJ == null) { // if either course is not assigned yet then dont count penalty yet
+    				continue; // skip
+    			}
+    			
+    			// get here and they are both assigned to a slot, but is it same one or an overlap?
+    			
+    			if (slotAssignedToI._hashIndex == slotAssignedToJ._hashIndex || slotAssignedToI._overlaps.contains(slotAssignedToJ._hashIndex)) { // same slot or an overlappping slot
+    				evalSecdiff += Algorithm.pen_section;
+    			}
+    			
+    		}
+    	}
+    	
+    	return evalSecdiff;
     }
     
     

@@ -1,4 +1,4 @@
 Eval-value: 0.0
+CPSC 354 LEC 01             : MO, 8:00
 CPSC 516 LEC 01             : TU, 8:00
 CPSC 518 LEC 01             : MO, 8:00
-CPSC 354 LEC 01             : MO, 8:00

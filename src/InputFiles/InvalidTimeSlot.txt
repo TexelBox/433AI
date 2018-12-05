@@ -1,0 +1,22 @@
+Name:
+InvalidTimeSlot
+
+Course slots:
+MO, 8:30, 1, 0
+
+Lab slots:
+
+Courses:
+CPSC 516 LEC 01
+
+Labs:
+
+Not compatible:
+
+Unwanted:
+
+Preferences:
+
+Pair:
+
+Partial assignments:

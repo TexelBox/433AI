@@ -1,0 +1,24 @@
+Name:
+BiggerMinThanMax
+
+Course slots:
+MO, 8:00, 1, 4
+
+Lab slots:
+TU, 14:00, 1, 0
+
+Courses:
+CPSC 433 LEC 01
+
+Labs:
+CPSC 433 LAB 01
+
+Not compatible:
+
+Unwanted:
+
+Preferences:
+
+Pair:
+
+Partial assignments:

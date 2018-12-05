@@ -1,0 +1,23 @@
+Name:
+JustLab
+
+Course slots:
+MO, 8:00, 1, 0
+
+Lab slots:
+TU, 14:00, 1, 0
+
+Courses:
+
+Labs:
+CPSC 433 LAB 01
+
+Not compatible:
+
+Unwanted:
+
+Preferences:
+
+Pair:
+
+Partial assignments:

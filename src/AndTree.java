@@ -108,6 +108,35 @@ public class AndTree {
         
         // only want to get eval when _foundValidAssign = true || chosenLeaf._isFull
         
+        
+        if (Algorithm._isNegWeightOrPenalty) {
+        	double theEval = 0;
+            if (chosenLeaf.isFull()) {
+            	chosenLeaf.setEval();
+                theEval = chosenLeaf._eval;
+                if (_foundValidAssign) {
+                	if (theEval < _bestEval) {
+            			// update best then close node
+                        updateBest(chosenLeaf._problem, theEval);
+            		}
+            		chosenLeaf.close(); // close cause its full
+                }
+                else {
+                	// set best for the first time here and close (nothing to compare to, so we are the best)
+                    updateBest(chosenLeaf._problem, theEval);
+                    chosenLeaf.close();
+                }
+            }
+            else {
+            	// expand node - nothing to compare to (so we dont need to eval - which we didnt)
+                chosenLeaf.expand(doPartAssign, partAssignChangedIndex); // it still has potential
+            }
+            return;
+        }
+        
+        
+        // get here if all weights/pens are non-negative...
+        
         double theEval = 0;
         if (_foundValidAssign || chosenLeaf.isFull()) {
         	chosenLeaf.setEval();

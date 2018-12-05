@@ -1,1 +1,3 @@
-NO VALID SOLUTION
+Eval-value: 0.0
+CPSC 313 LEC 01             : MO, 9:00
+CPSC 813 LAB 01             : TU, 18:00

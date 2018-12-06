@@ -20,7 +20,7 @@ public class Main {
             	return;
             }
 
-            boolean doesOutputFileExist = Output.getInstance().setOutputFilePath(outputFilePath);
+            boolean doesOutputFileExist = Output.getInstance().initOutputWriter(outputFilePath);
 
             if (!doesOutputFileExist) {
                 return;
@@ -32,8 +32,6 @@ public class Main {
                     return;
                 }
             }
-
-
 
             try {
                 Algorithm.pen_coursemin = Double.parseDouble(args[2]);
@@ -77,7 +75,7 @@ public class Main {
 
             }
 
-            Output.getInstance().closeOutputFile();
+            //Output.getInstance().closeOutputFile();
             if (_DEBUG) {
                 Output.getInstance().closeLogFile();
             }

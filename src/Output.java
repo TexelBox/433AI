@@ -33,20 +33,20 @@ public class Output {
     private BufferedWriter logwriter;
 
 
-    // return TRUE if output file exists...
-    public boolean setOutputFilePath(String outputFilePath) {
-        _outputFilePath = outputFilePath;
+    // methods...
 
-        try {
-            writer = new BufferedWriter(new FileWriter(_outputFilePath));
-        } catch (IOException e) {
-            System.out.println("ERROR: The specified output file was not found/created.");
+
+    public boolean initOutputWriter(String outputFilePath) {
+        _outputFilePath = outputFilePath;
+        boolean isOpen = openOutputFile();
+        if (!isOpen) {
             return false;
         }
-
-        return true;
-
+        boolean isClosed = closeOutputFile();
+        return isClosed;
     }
+
+
 
     public boolean initLogWriter() {
 
@@ -61,8 +61,46 @@ public class Output {
     }
 
 
-    // methods...
 
+    public boolean openOutputFile() {
+        try {
+            writer = new BufferedWriter(new FileWriter(_outputFilePath));
+        } catch (IOException e) {
+            System.out.println("ERROR: The specified output file was not found/created.");
+            return false;
+        }
+        return true;
+    }
+
+
+
+
+
+    public boolean closeOutputFile() {
+        try {
+            writer.close();
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: failed to close output file");
+            return false;
+        }
+        return true;
+    }
+
+    public boolean closeLogFile() {
+        try {
+            logwriter.close();
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: failed to close log file");
+            return false;
+        }
+        return true;
+    }
+
+
+
+    // DEBUG (or for huge files)....
     public void logValidSolution() {
         try {
             logwriter.write("===============================================\n");
@@ -112,6 +150,7 @@ public class Output {
     
     
     
+    // DEBUG....
     public void printValidSolution() {
     	System.out.println("===============================================");
     	System.out.println("passed time: " + Long.toString(System.currentTimeMillis() - Algorithm._starttime));
@@ -153,9 +192,13 @@ public class Output {
 
 
 
-    
-
+    // overwrite file contents
     public void outputValidSolution() { // write alphabetical listing + eval...
+
+        boolean isOpen = openOutputFile();
+        if (!isOpen) {
+            return;
+        }
 
         try {
             writer.write("Eval-value: " + Double.toString(_tree._bestEval) + "\n");  
@@ -189,7 +232,6 @@ public class Output {
         
         Collections.sort(outList);
         
-        
         try {
         	for (String str : outList) {
         		writer.write(str + "\n");
@@ -199,9 +241,19 @@ public class Output {
             System.out.println("ERROR: failed to write to output file");
         }
 
+        boolean isClosed = closeOutputFile();
+        if (!isClosed) {
+            return;
+        }
+
     }
 
     public void outputNoValidSolution() { // write NO VALID SOLUTION to file
+
+        boolean isOpen = openOutputFile();
+        if (!isOpen) {
+            return;
+        }
         
         try {
             writer.write("NO VALID SOLUTION\n");  
@@ -210,10 +262,20 @@ public class Output {
             System.out.println("ERROR: failed to write to output file");
         }
 
+        boolean isClosed = closeOutputFile();
+        if (!isClosed) {
+            return;
+        }
+
     }
 
 
     public void outputNoSolutionFoundYet() { // if we happen to timeout without finding a valid sol...
+
+        boolean isOpen = openOutputFile();
+        if (!isOpen) {
+            return;
+        }
         
         try {
             writer.write("NO VALID SOLUTION FOUND WITHIN SPECIFIED RUNTIME\n");  
@@ -222,28 +284,12 @@ public class Output {
             System.out.println("ERROR: failed to write to output file");
         }
 
+        boolean isClosed = closeOutputFile();
+        if (!isClosed) {
+            return;
+        }
+
     }
-
-
-
-    public void closeOutputFile() {
-        try {
-            writer.close();
-        }
-        catch (IOException e) {
-            System.out.println("ERROR: failed to close output file");
-        }
-    }
-
-    public void closeLogFile() {
-        try {
-            logwriter.close();
-        }
-        catch (IOException e) {
-            System.out.println("ERROR: failed to close log file");
-        }
-    }
-
 
 
 

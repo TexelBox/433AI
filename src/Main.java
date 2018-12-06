@@ -3,11 +3,11 @@
 
 public class Main {
 
-    public static boolean _DEBUG = true; // ~~~~~~~~~~~make sure to set false for submission
+    public static boolean _DEBUG = false; // NOTE: I call this debug, but its really for the large files if you want to have a max runtime..
 
     public static void main(String[] args) {
 
-        if (args.length == 10) { 
+        if (args.length == 10 || args.length == 12) { 
 
             // checking here that the files exist... (at least the inputfile, since the outputfile would be created if not existing)
 
@@ -26,13 +26,6 @@ public class Main {
                 return;
             }
 
-            if (_DEBUG) {
-                boolean doesLogFileExist = Output.getInstance().initLogWriter();
-                if (!doesLogFileExist) {
-                    return;
-                }
-            }
-
             try {
                 Algorithm.pen_coursemin = Double.parseDouble(args[2]);
                 Algorithm.pen_labsmin = Double.parseDouble(args[3]);
@@ -47,10 +40,50 @@ public class Main {
                 System.out.println("ERROR: one of the command-line penalties/weights is non-numeric. Please ensure to only specify strings that can be interpreted as a real number.");
                 return;
             }
-            
+
             Algorithm.setNegativeWeightOrPenalty();
 
-            Algorithm._runtime = 86400000; // 24 hrs
+
+            if (args.length == 12) {
+                if (!args[10].equals("TIMEOUT")) {
+                    System.out.println("Usage: java -jar CPSC433AI.jar <input file> <output file> <pen_coursemin> <pen_labsmin> <pen_notpaired> <pen_section> <w_minfilled> <w_pref> <w_pair> <w_secdiff>");
+                    System.out.println("or");
+                    System.out.println("Timeout Usage: java -jar CPSC433AI.jar <input file> <output file> <pen_coursemin> <pen_labsmin> <pen_notpaired> <pen_section> <w_minfilled> <w_pref> <w_pair> <w_secdiff> TIMEOUT <max runtime in milliseconds>");
+                    System.out.println("TIMEOUT parameter has a typo");
+                    return;
+                }
+                int runtime;
+                try {
+                    runtime = Integer.parseInt(args[11]);
+                }
+                catch (NumberFormatException e) {
+                    System.out.println("Usage: java -jar CPSC433AI.jar <input file> <output file> <pen_coursemin> <pen_labsmin> <pen_notpaired> <pen_section> <w_minfilled> <w_pref> <w_pair> <w_secdiff>");
+                    System.out.println("or");
+                    System.out.println("Timeout Usage: java -jar CPSC433AI.jar <input file> <output file> <pen_coursemin> <pen_labsmin> <pen_notpaired> <pen_section> <w_minfilled> <w_pref> <w_pair> <w_secdiff> TIMEOUT <max runtime in milliseconds>");
+                    System.out.println("please only specify a positive integer value (in ms) for the maximum runtime");
+                    return;
+                }
+                if (runtime <= 0) { // negative or 0 runtime would be undefined/pointless
+                    System.out.println("Usage: java -jar CPSC433AI.jar <input file> <output file> <pen_coursemin> <pen_labsmin> <pen_notpaired> <pen_section> <w_minfilled> <w_pref> <w_pair> <w_secdiff>");
+                    System.out.println("or");
+                    System.out.println("Timeout Usage: java -jar CPSC433AI.jar <input file> <output file> <pen_coursemin> <pen_labsmin> <pen_notpaired> <pen_section> <w_minfilled> <w_pref> <w_pair> <w_secdiff> TIMEOUT <max runtime in milliseconds>");
+                    System.out.println("please only specify a positive integer value (in ms) for the maximum runtime");
+                    return;
+                }
+                Algorithm._runtime = runtime;
+
+                boolean doesLogFileExist = Output.getInstance().initLogWriter();
+                if (!doesLogFileExist) {
+                    return;
+                }
+
+                // if everything went good, we are in DEBUG/TIMEOUT mode...
+
+                _DEBUG = true;
+
+            }
+
+
 
             boolean parseErrorOccurred = !Input.getInstance().parseFile(); 
 
@@ -83,6 +116,8 @@ public class Main {
         }
         else {
             System.out.println("Usage: java -jar CPSC433AI.jar <input file> <output file> <pen_coursemin> <pen_labsmin> <pen_notpaired> <pen_section> <w_minfilled> <w_pref> <w_pair> <w_secdiff>");
+            System.out.println("or");
+            System.out.println("Timeout Usage: java -jar CPSC433AI.jar <input file> <output file> <pen_coursemin> <pen_labsmin> <pen_notpaired> <pen_section> <w_minfilled> <w_pref> <w_pair> <w_secdiff> TIMEOUT <max runtime in milliseconds>");
         }
     }
 }

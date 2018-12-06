@@ -64,18 +64,28 @@ public class Algorithm {
             }
         }
 
-        // figure out end time (in ms)...
 
-        _starttime = System.currentTimeMillis();
-        _endtime = _starttime + _runtime; 
-
-        // main stuff if partassign loop succeeded in generating 1 leaf (stack has size 1)
-        while (!AndTree._leaves.isEmpty() && System.currentTimeMillis() < _endtime) { // while there are still leaves to process...
-            // then move onto rest of algorithm
-            Node chosenLeaf = _mainTree.fLeaf();
-            _mainTree.fTrans(chosenLeaf, false, 0); // just use last param as 0
-
+        if (Main._DEBUG) {
+            // figure out end time (in ms)...
+            _starttime = System.currentTimeMillis();
+            _endtime = _starttime + _runtime; 
+            // main stuff if partassign loop succeeded in generating 1 leaf (stack has size 1)
+            while (!AndTree._leaves.isEmpty() && System.currentTimeMillis() < _endtime) { // while there are still leaves to process and runtime hasnt elapsed...
+                // then move onto rest of algorithm
+                Node chosenLeaf = _mainTree.fLeaf();
+                _mainTree.fTrans(chosenLeaf, false, 0); // just use last param as 0
+            }
         }
+        else {
+            // main stuff if partassign loop succeeded in generating 1 leaf (stack has size 1)
+            while (!AndTree._leaves.isEmpty()) { // while there are still leaves to process...
+                // then move onto rest of algorithm
+                Node chosenLeaf = _mainTree.fLeaf();
+                _mainTree.fTrans(chosenLeaf, false, 0); // just use last param as 0
+            }
+        }
+        
+        
 
         // after finishing tree search...
 

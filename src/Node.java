@@ -8,6 +8,9 @@ import java.util.Set;
 
 public class Node {
 
+	public static List<Integer> _courseAssignOrder;
+
+
     public Slot[] _problem; // only differs from its parent by one slot (leftmost null was changed in current plan), except in the case of the partassign expansions
     public boolean _sol; // false = ?, true = 'yes'
 
@@ -325,13 +328,23 @@ public class Node {
             newChangedIndex = partAssignChangedIndex;
         }
         else {
+			/*
         	// find leftmost null in _problem
         	for (int i = 0; i < _problem.length; i++) {
         		if (_problem[i] == null) {
         			newChangedIndex = i;
         			break;
         		}
-        	}
+			}
+			*/
+
+			// smarter way of assigning (find the null that corresponds to most restricted course)
+			for (int nextCourseIndex : _courseAssignOrder) {
+				if (_problem[nextCourseIndex] == null) {
+					newChangedIndex = nextCourseIndex;
+					break;
+				}
+			}
         	
         }
         

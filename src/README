@@ -1,0 +1,33 @@
+-=-=-=-=-=-=-
+CPSC 433 - FALL 2018
+
+Implementation of AND-Tree-Based Search applied to course scheduling problems.
+
+Group Members:
+
+Aaron Hornby
+Cynthia Nguyen
+Esther Chung
+Herman Kwan
+
+
+Run Instructions:
+
+1. place input file(s) in same directory as CPSC433AI.jar
+
+There are 2 run modes (Normal and TIMEOUT)
+- Normal: runs the search normally until tree is fully processed.
+- TIMEOUT: runs the search upto the inputted maximum runtime. Useful for large files.
+    timeout mode will create a log.txt in same directory that will have more optimal solutions appended to it as they are found. There will also be a print on the command-line to indicate when a better solution is found.
+
+2A. NORMAL MODE USAGE:
+
+Usage: java -jar CPSC433AI.jar <input file> <output file> <pen_coursemin> <pen_labsmin> <pen_notpaired> <pen_section> <w_minfilled> <w_pref> <w_pair> <w_secdiff>
+
+2B. TIMEOUT MODE USAGE:
+
+Timeout Usage: java -jar CPSC433AI.jar <input file> <output file> <pen_coursemin> <pen_labsmin> <pen_notpaired> <pen_section> <w_minfilled> <w_pref> <w_pair> <w_secdiff> TIMEOUT <max runtime in milliseconds>
+
+
+
+-=-=-=-=-=-=-

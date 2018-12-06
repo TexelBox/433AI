@@ -182,6 +182,16 @@ public class AndTree {
         _bestAssign = newBestAssign;
         _bestEval = newBestEval;
         _foundValidAssign = true;
+        Output.getInstance().outputValidSolution(); // overwrite the valid solution in file... (in case user terminates program after their patience has run out)
+        if (Main._DEBUG) {
+            
+            long timePassed = System.currentTimeMillis() - Algorithm._starttime;
+            System.out.println("BETTER SOLUTION FOUND, time passed = " + Long.toString(timePassed));
+
+            Output.getInstance().logValidSolution();
+            
+            //Output.getInstance().printValidSolution();
+        }
     }
 
 

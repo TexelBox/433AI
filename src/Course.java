@@ -37,6 +37,10 @@ public class Course {
 
     public String _sharedHashKey; // e.g. CPSC 433 LEC 01 and CPSC 433 LEC 02 both have shared hashkey "CPSC:433"
 
+    public int _unwantedDegree; // first line of attack (how many slots is this course unwanted with)
+    public int _notCompatDegree; // tiebreaker for constraint degree ordering (how many other course/labs am i not compat with?) 
+    public int _ncDegreeRelative; // will get repeatedly reset...
+
 
 
     // methods

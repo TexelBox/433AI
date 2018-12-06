@@ -94,6 +94,8 @@
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.HashMap;
 import java.util.AbstractMap;
@@ -215,7 +217,17 @@ public class Input {
         return true;
 
     }
-    
+
+    /*
+    public void closeInputFile() {
+        try {
+            reader.close();
+        }
+        catch (IOException e) {
+            System.out.println("ERROR: failed to close input file");
+        }
+    }
+    */
     
     
     
@@ -1573,7 +1585,7 @@ public class Input {
                 createAndAdd813(hashIndex813);
             }
             else {
-                System.out.println("ERROR: CPSC 813 cannot be initialized due to TU 18:00 lab slot never being defined."); // ~~~~~~~~~~~NOTE: i need to change this so that it overrides the NO VALID SOLUTION
+                System.out.println("WARNING: CPSC 813 cannot be initialized due to TU 18:00 lab slot never being defined."); // ~~~~~~~~~~~NOTE: i need to change this so that it overrides the NO VALID SOLUTION
                 return false;
             }
             
@@ -1587,7 +1599,7 @@ public class Input {
                 createAndAdd913(hashIndex913);
             }
             else {
-                System.out.println("ERROR: CPSC 913 cannot be initialized due to TU 18:00 lab slot never being defined."); // ~~~~~~~~~~~NOTE: i need to change this so that it overrides the NO VALID SOLUTION
+                System.out.println("WARNING: CPSC 913 cannot be initialized due to TU 18:00 lab slot never being defined."); // ~~~~~~~~~~~NOTE: i need to change this so that it overrides the NO VALID SOLUTION
                 return false;
             }
         }
@@ -1606,7 +1618,7 @@ public class Input {
                 createAndAdd913(hashIndex913);
             }
             else {
-                System.out.println("ERROR: CPSC 813 and CPSC 913 cannot be initialized due to TU 18:00 lab slot never being defined."); // ~~~~~~~~~~~NOTE: i need to change this so that it overrides the NO VALID SOLUTION
+                System.out.println("WARNING: CPSC 813 and CPSC 913 cannot be initialized due to TU 18:00 lab slot never being defined."); // ~~~~~~~~~~~NOTE: i need to change this so that it overrides the NO VALID SOLUTION
                 return false;
             }
         }
@@ -1641,9 +1653,162 @@ public class Input {
             }
         }
 
-        
+
+        // now sort both lists (high max -> low max)
+        // needs to be in this decreasing order since the tree pushes children L->R on the stack and i want the most restictive slot assignment on the top of stack
+
+        Collections.sort(_courseSlotList, new Comparator<Slot>(){
+            public int compare(Slot s1, Slot s2){
+                if(s1._coursemax == s2._coursemax)
+                    return 0;
+                return s1._coursemax < s2._coursemax ? -1 : 1;
+            }
+        });
+
+        Collections.reverse(_courseSlotList);
+
+
+
+        Collections.sort(_labSlotList, new Comparator<Slot>(){
+            public int compare(Slot s1, Slot s2){
+                if(s1._labmax == s2._labmax)
+                    return 0;
+                return s1._labmax < s2._labmax ? -1 : 1;
+            }
+        });
+
+        Collections.reverse(_labSlotList);
+
+
+
+
+
+        // cache unwanted degree...
+
+        for (int c = 0; c < _courseList.size(); c++) {
+            int unwantedDegree = 0;
+            for (int s = 0; s < _slotList.size(); s++) {
+                if (_unwanteds[c][s]) {
+                    unwantedDegree++;
+                }
+            }
+            _courseList.get(c)._unwantedDegree = unwantedDegree;
+        }
+
+        // cache not-compat degree...
+
+        for (int c1 = 0; c1 < _courseList.size(); c1++) {
+            int notCompatDegree = 0;
+            for (int c2 = 0; c2 < _courseList.size(); c2++) {
+                if (_notCompatibles[c1][c2]) {
+                    notCompatDegree++;
+                }
+            }
+            _courseList.get(c1)._notCompatDegree = notCompatDegree;
+        }
+
+
+
+
+        // now generate the order of course indices to assign slots to L -> R
+        // construct list from ground up
+        // order of tiebreaks...
+        // 1. unwantedDegree
+        // 2. notCompatDegree w/ those already in list
+        // 3. notCompatDegree w/ all courses
+
+
+        List<Integer> sortedCourseIndices = new ArrayList<Integer>(_courseList.size()); // empty (built up to size of courselist)
+
+        List<Course> courseListCopy = new ArrayList<Course>(_courseList.size()); // copy every element in courselist into here, because i want to remove elements from this list and place them in sorted list
+
+        // end condition is when courseListCopy is empty and sortedlist would be size of courselist
+
+        // first copy...
+
+        for (Course course : _courseList) {
+            courseListCopy.add(course);
+        }
+
+        while (!courseListCopy.isEmpty()) {
+            // figure out next course index tp add to sorted list
+            Course bestCandidate = null;
+            int bestCandidateIndexInCopyList = -1;
+            for (int index = 0; index < courseListCopy.size(); index++) {
+                Course candidate = courseListCopy.get(index);
+                int ncDegreeRelative = getNCDegreeRelative(sortedCourseIndices, candidate);
+                candidate._ncDegreeRelative = ncDegreeRelative;
+                
+                if (bestCandidate == null) {
+                    bestCandidate = candidate;
+                    bestCandidateIndexInCopyList = index;
+                }
+                else {
+                    // tiebreak...
+                    if (candidate._isEveningCourse && !bestCandidate._isEveningCourse) {
+                        bestCandidate = candidate;
+                        bestCandidateIndexInCopyList = index;
+                    }
+                    else if (candidate._isEveningCourse == bestCandidate._isEveningCourse) {
+                        // tiebreak...
+                        if (candidate._unwantedDegree > bestCandidate._unwantedDegree) {
+                            bestCandidate = candidate;
+                            bestCandidateIndexInCopyList = index;
+                        }
+                        else if (candidate._unwantedDegree == bestCandidate._unwantedDegree) {
+                            // tiebreak..
+                            if (candidate._is500Course && !bestCandidate._is500Course) {
+                                bestCandidate = candidate;
+                                bestCandidateIndexInCopyList = index;
+                            }
+                            else if (candidate._is500Course == bestCandidate._is500Course) {
+                                // tiebreak...
+                                if (candidate._ncDegreeRelative > bestCandidate._ncDegreeRelative) {
+                                    bestCandidate = candidate;
+                                    bestCandidateIndexInCopyList = index;
+                                }
+                                else if (candidate._ncDegreeRelative == bestCandidate._ncDegreeRelative) {
+                                    // tiebreak..
+                                    if (candidate._notCompatDegree > bestCandidate._notCompatDegree) {
+                                        bestCandidate = candidate;
+                                        bestCandidateIndexInCopyList = index;
+                                    }
+                                    // otherwise, just keep bestcanidate as is
+                                }
+                            }
+                        }
+                    }   
+                }
+            }
+            // done the loop (found a best candidate)...
+            // now add course index of best candiate to end of sorted list
+            sortedCourseIndices.add(bestCandidate._hashIndex);
+            // then remove this course from copy list
+            courseListCopy.remove(bestCandidateIndexInCopyList);
+        }
+
+        // get here with sortedCourseIndices being the list indicating to the search, which order to assign courses
+
+
+        Node._courseAssignOrder = sortedCourseIndices;
+
+
 
         return true;
+    }
+
+
+
+
+    // amount of courses in sorted list that this course is NotCompat with...
+    private int getNCDegreeRelative(List<Integer> sortedList, Course candidate) {
+        int ncDegreeRelative = 0;
+        for (int sortedCourseIndex : sortedList) {
+            if (_notCompatibles[candidate._hashIndex][sortedCourseIndex]) {
+                ncDegreeRelative++;
+            }
+        }
+        return ncDegreeRelative;
     }
 
 

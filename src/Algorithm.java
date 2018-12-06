@@ -26,12 +26,19 @@ public class Algorithm {
 
     public static boolean _isNegWeightOrPenalty; // true if at least one is negative
 
+    public static long _starttime;
+
+    public static long _runtime; // in milleseconds
+
+    public static long _endtime;
+
     AndTree _mainTree;
 
     // methods...
 
     public Algorithm() {
         _mainTree = new AndTree();
+        Output.getInstance()._tree = _mainTree; // pass reference to our tree into output
     }
 
     // must be called after statics are externally set...
@@ -57,21 +64,30 @@ public class Algorithm {
             }
         }
 
-        // main stuff if partassign loop succeeded in generating 1 leaf (stack has size 1)
-        while (!AndTree._leaves.isEmpty()) { // while there are still leaves to process...
 
-            // then move onto rest of algorithm
-            Node chosenLeaf = _mainTree.fLeaf();
-            _mainTree.fTrans(chosenLeaf, false, 0); // just use last param as 0
-
+        if (Main._DEBUG) {
+            // figure out end time (in ms)...
+            _starttime = System.currentTimeMillis();
+            _endtime = _starttime + _runtime; 
+            // main stuff if partassign loop succeeded in generating 1 leaf (stack has size 1)
+            while (!AndTree._leaves.isEmpty() && System.currentTimeMillis() < _endtime) { // while there are still leaves to process and runtime hasnt elapsed...
+                // then move onto rest of algorithm
+                Node chosenLeaf = _mainTree.fLeaf();
+                _mainTree.fTrans(chosenLeaf, false, 0); // just use last param as 0
+            }
         }
-
-
+        else {
+            // main stuff if partassign loop succeeded in generating 1 leaf (stack has size 1)
+            while (!AndTree._leaves.isEmpty()) { // while there are still leaves to process...
+                // then move onto rest of algorithm
+                Node chosenLeaf = _mainTree.fLeaf();
+                _mainTree.fTrans(chosenLeaf, false, 0); // just use last param as 0
+            }
+        }
+        
+        
 
         // after finishing tree search...
-
-        Output.getInstance()._tree = _mainTree; // pass reference to our tree into output
-
 
         if (_mainTree._foundValidAssign) {
             return true;

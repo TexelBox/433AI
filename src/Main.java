@@ -7,15 +7,15 @@ public class Main {
 
     public static void main(String[] args) {
 
-        if (args.length == 10 || args.length == 12) { 
+        if (args.length == 10 || args.length == 12) {
 
             // checking here that the files exist... (at least the inputfile, since the outputfile would be created if not existing)
 
             String inputFilePath = args[0];
             String outputFilePath = args[1];
-            
+
             boolean doesInputFileExist = Input.getInstance().setInputFilePath(inputFilePath);
-            
+
             if (!doesInputFileExist) {
             	return;
             }
@@ -85,12 +85,12 @@ public class Main {
 
 
 
-            boolean parseErrorOccurred = !Input.getInstance().parseFile(); 
+            boolean parseErrorOccurred = !Input.getInstance().parseFile();
 
             if (!parseErrorOccurred) {
                 // use the data structures in input to run the algorithm on.
                 Algorithm algo = new Algorithm();
-                boolean isValidSol = algo.processTree(); 
+                boolean isValidSol = algo.processTree();
                 if (isValidSol) {
                     // print bestEval and bestAssign to output file
                     Output.getInstance().outputValidSolution();
@@ -109,7 +109,7 @@ public class Main {
                 	else {
                 		Output.getInstance().outputNoValidSolution();
                 	}
-                    
+
                 }
 
             }
@@ -118,7 +118,7 @@ public class Main {
             if (_DEBUG) {
                 Output.getInstance().closeLogFile();
             }
-            
+
         }
         else {
             System.out.println("Usage: java -jar CPSC433AI.jar <input file> <output file> <pen_coursemin> <pen_labsmin> <pen_notpaired> <pen_section> <w_minfilled> <w_pref> <w_pair> <w_secdiff>");

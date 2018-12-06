@@ -1,4 +1,9 @@
-Eval-value: 30.0
-CPSC 101 LEC 01             : MO, 8:00
-CPSC 102 LEC 01             : MO, 10:00
-CPSC 103 LEC 01             : MO, 9:00
+Eval-value: 3.0
+CPSC 433 LEC 01             : MO, 9:00
+CPSC 433 LEC 01 TUT 01      : TU, 10:00
+CPSC 433 LEC 02             : TU, 9:30
+CPSC 433 LEC 02 LAB 02      : MO, 8:00
+CPSC 567 LEC 01             : MO, 8:00
+CPSC 567 TUT 01             : FR, 10:00
+SENG 311 LEC 01             : MO, 8:00
+SENG 311 LEC 01 TUT 01      : FR, 10:00

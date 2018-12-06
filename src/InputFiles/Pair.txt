@@ -1,14 +1,15 @@
 Name:
-CPSC413
+Pair
 
 Course slots:
-MO, 9:00, 1, 0
+MO, 8:00, 1, 0
+MO, 10:00, 2, 0
 
 Lab slots:
-TU, 18:00, 1, 0
 
 Courses:
-CPSC 413 LEC 01
+CPSC 433 LEC 01
+CPSC 433 LEC 02
 
 Labs:
 
@@ -19,5 +20,6 @@ Unwanted:
 Preferences:
 
 Pair:
+CPSC 433 LEC 01, CPSC 433 LEC 02
 
 Partial assignments:

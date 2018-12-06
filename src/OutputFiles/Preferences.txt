@@ -1,0 +1,5 @@
+Eval-value: 20.0
+CPSC 433 LAB 02             : MO, 11:00
+CPSC 433 LEC 01             : MO, 10:00
+CPSC 433 LEC 02             : MO, 8:00
+CPSC 433 TUT 01             : TU, 10:00

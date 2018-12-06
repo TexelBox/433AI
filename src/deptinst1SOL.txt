@@ -1,6 +1,4 @@
-===============================================
-passed time: 61
-Eval-value: 9927.0
+Eval-value: 4557.0
 CPSC 203 LEC 01             : MO, 10:00
 CPSC 203 LEC 01 TUT 01      : TU, 11:00
 CPSC 203 LEC 01 TUT 02      : TU, 12:00

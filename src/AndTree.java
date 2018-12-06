@@ -183,9 +183,14 @@ public class AndTree {
         _bestEval = newBestEval;
         _foundValidAssign = true;
         if (Main._DEBUG) {
-            Output.getInstance().logValidSolution();
+            
+        	
             long timePassed = System.currentTimeMillis() - Algorithm._starttime;
             System.out.println("BETTER SOLUTION FOUND, time passed = " + Long.toString(timePassed));
+
+            Output.getInstance().logValidSolution();
+            
+            //Output.getInstance().printValidSolution();
         }
     }
 

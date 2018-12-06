@@ -102,11 +102,53 @@ public class Output {
         try {
         	for (String str : outList) {
         		logwriter.write(str + "\n");
-        	}
+            }
+            logwriter.flush(); // write to file NOW
         }
         catch (IOException e) {
             System.out.println("ERROR: failed to write to output file");
         }
+    }
+    
+    
+    
+    public void printValidSolution() {
+    	System.out.println("===============================================");
+    	System.out.println("passed time: " + Long.toString(System.currentTimeMillis() - Algorithm._starttime));
+    	System.out.println("Eval-value: " + Double.toString(_tree._bestEval));
+    	
+    	Slot[] bestAssign = _tree._bestAssign;
+        
+        List<String> outList = new ArrayList<String>();
+
+        for (int i = 0; i < bestAssign.length; i++) {
+            Course nextCourse = Input.getInstance()._courseList.get(i);
+            String nextCourseOutputID = nextCourse._outputID;
+            String nextSlotOutputID = bestAssign[i]._outputID;
+
+            String spacing;
+            if (nextCourse._secondaryType == Course.SecondaryType.NONE) {
+                spacing = "             : ";
+            }
+            else {
+                spacing = "      : ";
+            }
+
+            String outLine = nextCourseOutputID + spacing + nextSlotOutputID;
+            
+            outList.add(outLine);
+
+        }
+        
+        Collections.sort(outList);
+        
+        
+       
+    	for (String str : outList) {
+    		System.out.println(str);
+    	}
+        
+        
     }
 
 

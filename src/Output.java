@@ -66,6 +66,7 @@ public class Output {
     public void logValidSolution() {
         try {
             logwriter.write("===============================================\n");
+            logwriter.write("passed time: " + Long.toString(System.currentTimeMillis() - Algorithm._starttime) + "\n");
             logwriter.write("Eval-value: " + Double.toString(_tree._bestEval) + "\n");  
         }
         catch (IOException e) {
